@@ -11,6 +11,18 @@ services:
     networks:
       - red_web
 
+
+
+  api:
+    build: ./api
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    volumes:
+      - ./api/app:/app
+
+
+
 networks:
   red_web:
     driver: bridge

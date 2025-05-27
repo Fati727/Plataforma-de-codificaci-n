@@ -11,7 +11,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 #COPY ./app app
 
 # Establece el directorio de trabajo
-#WORKDIR /app
+WORKDIR /app
 
 # Expone el puerto en el que correrá la app
 EXPOSE 8000

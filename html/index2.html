@@ -200,7 +200,7 @@
         <button onclick="ejecutarFineTuning()">Iniciar Fine Tuning</button>
     </div>
     
-    <!-- Resultados de Evaluación -->
+    <!-- Resultados de Evaluación y Funcion que actualice los datos-->
     <div id="resultados-evaluacion" class="results">
         <h2>Resultados de Evaluación</h2>
         <p>Modelo evaluado: <span id="modelo-evaluado">BERT Base (Español)</span></p>
@@ -224,56 +224,40 @@
     </div>
     
     <script>
-        // Función para mostrar el formulario seleccionado
-        function showForm(formType) {
-            // Oculta todos los formularios primero
-            document.querySelectorAll('.form-container').forEach(form => {
-                form.style.display = 'none';
+         
+    async function evaluateModel() {
+        const modelName = document.getElementById('modelName').value;
+        const csvFile = document.getElementById('csvFile').files[0];
+        
+        if (!csvFile) {
+            alert('Por favor selecciona un archivo CSV');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('model_name', modelName);
+        formData.append('csv_file', csvFile);
+
+        try {
+           
+            const response = await fetch('localhost:8000/evaluate-model/', {
+                method: 'POST',  
+                body: formData
             });
-            document.querySelectorAll('.results').forEach(result => {
-                result.style.display = 'none';
-            });
-            
-            // Muestra el formulario seleccionado
-            if (formType === 'evaluacion') {
-                document.getElementById('evaluacion-form').style.display = 'block';
-            } else if (formType === 'fine-tuning') {
-                document.getElementById('fine-tuning-form').style.display = 'block';
-            } else if (formType === 'entrenamiento') {
-                // Aquí iría el formulario de entrenamiento
-                alert('Formulario de entrenamiento desde cero');
+
+            if (!response.ok) {
+                throw new Error(`Error: ${response.status}`);
             }
-        }
-        
-        // Función simulada para evaluar modelo
-        function evaluarModelo() {
-            const modelo = document.getElementById('modelo-evaluacion').value;
-            const archivo = document.getElementById('archivo-evaluacion').files[0];
+
+            const data = await response.json();
+            console.log('Éxito:', data);
+            // Mostrar resultados al usuario...
             
-            if (!archivo) {
-                alert('Por favor, suba un archivo CSV');
-                return;
-            }
-            
-            // Simulación de procesamiento
-            setTimeout(() => {
-                document.getElementById('evaluacion-form').style.display = 'none';
-                document.getElementById('resultados-evaluacion').style.display = 'block';
-                document.getElementById('modelo-evaluado').textContent = 
-                    document.getElementById('modelo-evaluacion').options[document.getElementById('modelo-evaluacion').selectedIndex].text;
-            }, 1500);
+        } catch (error) {
+            console.error('Error en la petición:', error);
+            alert('Error al evaluar el modelo');
         }
-        
-        // Función simulada para fine tuning
-        function ejecutarFineTuning() {
-            alert('Fine tuning iniciado. Este proceso puede tardar varios minutos.');
-            // Aquí iría la lógica real para conectarse al backend
-        }
-        
-        // Función simulada para descargar resultados
-        function descargarResultados() {
-            alert('Generando reporte de evaluación...');
-        }
-    </script>
+    }
+</script>
 </body>
 </html>
