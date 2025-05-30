@@ -9,7 +9,11 @@ import io
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  #dominio frontend
+    allow_origins=[
+        "http://localhost",       # El frontend que accede a la API
+        "http://localhost:8000",  # Si usas React u otro framework que corre en otro puerto
+    ],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )

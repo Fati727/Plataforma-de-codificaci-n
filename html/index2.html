@@ -313,7 +313,7 @@
         formData.append('model_name', modelName);
         formData.append('csv_file', csvFile);
         
-        const response = await fetch('http://localhost:8000/evaluate-model/?model_name=', {
+        const response = await fetch('http://localhost:8000/evaluate-model/', {
             method: 'POST',
             credentials: 'include',  // Importante para CORS con credenciales
             body: formData
