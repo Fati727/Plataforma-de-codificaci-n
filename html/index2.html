@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -17,8 +16,7 @@
             background-color: #f5f7fa;
         }
 
-        h1,
-        h2 {
+        h1, h2 {
             color: #2c3e50;
         }
 
@@ -60,7 +58,6 @@
             padding: 25px;
             margin-top: 30px;
             display: none;
-            /* Oculto inicialmente */
         }
 
         .form-group {
@@ -146,17 +143,69 @@
         }
 
         @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-
-            100% {
-                transform: rotate(360deg);
-            }
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
+
+        /* Tabla de resultados */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 16px;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        /* Estilo para el botón de descarga */
+        .download-btn-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+            .qualitative-metrics {
+        margin-top: 20px;
+    }
+
+    .metric-bar {
+        background-color: #eee;
+        border-radius: 10px;
+        overflow: hidden;
+        height: 20px;
+        margin-bottom: 10px;
+        position: relative;
+    }
+
+    .metric-bar-fill {
+        height: 100%;
+        text-align: right;
+        padding-right: 10px;
+        color: white;
+        font-size: 14px;
+        line-height: 20px;
+        border-radius: 10px;
+    }
+
+    .metric-label {
+        margin-bottom: 5px;
+        font-weight: bold;
+    }
+
     </style>
 </head>
-
 <body>
     <header>
         <h1>Plataforma de Adopción de LLMs</h1>
@@ -164,26 +213,22 @@
     </header>
 
     <div class="card-container">
-        <!-- Tarjeta de Evaluación -->
         <div class="card" onclick="showForm('evaluacion')">
             <h2>Evaluación de Modelos</h2>
             <p>Pruebe modelos pre-entrenados con sus datos y obtenga métricas de desempeño.</p>
         </div>
 
-        <!-- Tarjeta de Fine Tuning -->
         <div class="card" onclick="showForm('fine-tuning')">
             <h2>Fine Tuning</h2>
             <p>Ajuste modelos pre-entrenados con sus datos específicos.</p>
         </div>
 
-        <!-- Tarjeta de Entrenamiento -->
         <div class="card" onclick="showForm('entrenamiento')">
             <h2>Entrenamiento desde Cero</h2>
             <p>Entrene un nuevo modelo con su arquitectura y datos personalizados.</p>
         </div>
     </div>
 
-    <!-- Formulario de Evaluación -->
     <div id="evaluacion-form" class="form-container">
         <h2>Evaluación de Modelos</h2>
 
@@ -209,7 +254,6 @@
         </div>
     </div>
 
-    <!-- Formulario de Fine Tuning -->
     <div id="fine-tuning-form" class="form-container">
         <h2>Fine Tuning</h2>
 
@@ -243,61 +287,59 @@
         </div>
     </div>
 
-    <!-- Resultados de Evaluación -->
     <div id="resultados-evaluacion" class="results">
-        <h2>Resultados de Evaluación</h2>
-        <p>Modelo evaluado: <span id="modelo-evaluado"></span></p>
-
+        <h3>Resultados de Evaluación del Modelo</h3>
         <div class="metrics">
-            <div class="metric-card">
-                <div class="metric-value" id="precision-value">0.00</div>
-                <div>Precisión</div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-value" id="recall-value">0.00</div>
-                <div>Recall</div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-value" id="f1-value">0.00</div>
-                <div>F1-Score</div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-value" id="accuracy-value">0.00</div>
-                <div>Exactitud</div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-value" id="muestras-value">0</div>
-                <div>Muestras</div>
-            </div>
+            <div class="metric-card"><div class="metric-value"></div><div>Exactitud</div></div>
+            <div class="metric-card"><div class="metric-value"></div><div>Precisión</div></div>
+            <div class="metric-card"><div class="metric-value"></div><div>Recall</div></div>
+            <div class="metric-card"><div class="metric-value"></div><div>F1-Score</div></div>
         </div>
-
-        <button onclick="descargarResultados()">Descargar Reporte Completo</button>
+        <hr>
+        <h4>Estadísticas del Dataset</h4>
+        <ul>
+            <li><strong>Muestras:</strong> 1000</li>
+            <li><strong>Características:</strong> 50</li>
+        </ul>
+        <hr>
+        <h4>Matriz de Confusión</h4>
+        <table>
+            <tr>
+                <th></th>
+                <th>Predicho Positivo</th>
+                <th>Predicho Negativo</th>
+            </tr>
+            <tr>
+                <th>Real Positivo</th>
+                <td>500</td>
+                <td>100</td>
+            </tr>
+            <tr>
+                <th>Real Negativo</th>
+                <td>50</td>
+                <td>350</td>
+            </tr>
+        </table>
+        <div class="download-btn-container">
+            <button onclick="descargarResultados()">Descargar Reporte Completo</button>
+        </div>
     </div>
 
     <script>
-           
-        // Función para mostrar el formulario seleccionado
         function showForm(formType) {
-            // Oculta todos los formularios primero
-            document.querySelectorAll('.form-container').forEach(form => {
-                form.style.display = 'none';
-            });
-            document.querySelectorAll('.results').forEach(result => {
-                result.style.display = 'none';
-            });
-            
-            // Muestra el formulario seleccionado
+            document.querySelectorAll('.form-container').forEach(form => form.style.display = 'none');
+            document.querySelectorAll('.results').forEach(result => result.style.display = 'none');
+
             if (formType === 'evaluacion') {
                 document.getElementById('evaluacion-form').style.display = 'block';
             } else if (formType === 'fine-tuning') {
                 document.getElementById('fine-tuning-form').style.display = 'block';
             } else if (formType === 'entrenamiento') {
-                // Aquí iría el formulario de entrenamiento
                 alert('Formulario de entrenamiento desde cero');
             }
         }
 
-  async function evaluarModelo() {
+        async function evaluarModelo() {
             const modelName = document.getElementById('modelo-evaluacion').value;
             const csvFile = document.getElementById('archivo-evaluacion').files[0];
 
@@ -326,7 +368,6 @@
                 }
 
                 const data = await response.json();
-                console.log('Respuesta completa del backend:', data);  // Útil para depuración
                 mostrarResultadosEvaluacion(data);
 
             } catch (error) {
@@ -337,35 +378,80 @@
             }
         }
 
-        function mostrarResultadosEvaluacion(data) {
-            const m = data.metrics;
-            const resultadosDiv = document.getElementById('resultados-evaluacion');
-            resultadosDiv.style.display = 'block';
+function mostrarResultadosEvaluacion(data) {
+    const m = data.metrics;
+    const resultadosDiv = document.getElementById('resultados-evaluacion');
+    resultadosDiv.style.display = 'block';
 
-            resultadosDiv.innerHTML = `
-                <h3>Resultados de Evaluación del Modelo: ${data.model}</h3>
-                <ul>
-                    <li><strong>Exactitud:</strong> ${m.accuracy}</li>
-                    <li><strong>Precisión:</strong> ${m.precision}</li>
-                    <li><strong>Recall:</strong> ${m.recall}</li>
-                    <li><strong>F1 Score:</strong> ${m.f1_score}</li>
-                </ul>
-                <hr>
-                <h4>Estadísticas del Dataset</h4>
-                <ul>
-                    <li><strong>Muestras:</strong> ${data.dataset_stats.samples}</li>
-                    <li><strong>Características:</strong> ${data.dataset_stats.features}</li>
-                </ul>
-                <hr>
-                <h4>Matriz de Confusión</h4>
-                <table border="1" cellpadding="6">
-                    <tr><th></th><th>Predicho Positivo</th><th>Predicho Negativo</th></tr>
-                    <tr><th>Real Positivo</th><td>${m.confusion_matrix.true_positives}</td><td>${m.confusion_matrix.false_negatives}</td></tr>
-                    <tr><th>Real Negativo</th><td>${m.confusion_matrix.false_positives}</td><td>${m.confusion_matrix.true_negatives}</td></tr>
-                </table>
-            `;
-        }
+    // Primero renderizamos el contenido base
+    resultadosDiv.innerHTML = `
+        <h3>Resultados de Evaluación del Modelo: ${data.model}</h3>
+        <div class="metrics">
+            <div class="metric-card"><div class="metric-value">${m.accuracy}</div><div>Exactitud</div></div>
+            <div class="metric-card"><div class="metric-value">${m.precision}</div><div>Precisión</div></div>
+            <div class="metric-card"><div class="metric-value">${m.recall}</div><div>Recall</div></div>
+            <div class="metric-card"><div class="metric-value">${m.f1_score}</div><div>F1-Score</div></div>
+        </div>
+        <hr>
+        <h4>Estadísticas del Dataset</h4>
+        <ul>
+            <li><strong>Muestras:</strong> ${data.dataset_stats.samples}</li>
+            <li><strong>Características:</strong> ${data.dataset_stats.features}</li>
+        </ul>
+        <hr>
+        <h4>Matriz de Confusión</h4>
+        <table>
+            <tr>
+                <th></th>
+                <th>Predicho Positivo</th>
+                <th>Predicho Negativo</th>
+            </tr>
+            <tr>
+                <th>Real Positivo</th>
+                <td>${m.confusion_matrix.true_positives}</td>
+                <td>${m.confusion_matrix.false_negatives}</td>
+            </tr>
+            <tr>
+                <th>Real Negativo</th>
+                <td>${m.confusion_matrix.false_positives}</td>
+                <td>${m.confusion_matrix.true_negatives}</td>
+            </tr>
+        </table>
+        <div class="download-btn-container">
+            <button onclick="descargarResultados()">Descargar Reporte Completo</button>
+        </div>
+    `;
+
+    // Ahora añadimos las barras cualitativas
+    const calidad = (valor) => {
+        if (valor >= 0.9) return { text: "Altísima", color: "#4caf50" };
+        if (valor >= 0.75) return { text: "Muy buena", color: "#2196f3" };
+        if (valor >= 0.5) return { text: "Aceptable", color: "#ff9800" };
+        return { text: "Baja", color: "#f44336" };
+    };
+
+    const barra = (nombre, valor) => {
+        const q = calidad(valor);
+        return `
+            <div class="metric-label">${nombre}: ${q.text} (${(valor * 100).toFixed(1)}%)</div>
+            <div class="metric-bar">
+                <div class="metric-bar-fill" style="width: ${(valor * 100).toFixed(1)}%; background-color: ${q.color};">
+                    ${(valor * 100).toFixed(0)}%
+                </div>
+            </div>
+        `;
+    };
+
+    resultadosDiv.innerHTML += `
+        <div class="qualitative-metrics">
+            <h4>Evaluación Cualitativa</h4>
+            ${barra("Exactitud", m.accuracy)}
+            ${barra("Precisión", m.precision)}
+            ${barra("Recall", m.recall)}
+            ${barra("F1-Score", m.f1_score)}
+        </div>
+    `;
+}
     </script>
 </body>
-
 </html>
