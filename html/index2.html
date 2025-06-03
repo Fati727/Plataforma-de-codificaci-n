@@ -298,44 +298,73 @@
         }
 
   async function evaluarModelo() {
-    const modelName = document.getElementById('modelo-evaluacion').value;
-    const csvFile = document.getElementById('archivo-evaluacion').files[0];
-    
-    if (!csvFile) {
-        alert('Por favor selecciona un archivo CSV');
-        return;
-    }
-    
-    document.getElementById('loading-evaluacion').style.display = 'block';
-    
-    try {
-        const formData = new FormData();
-        formData.append('model_name', modelName);
-        formData.append('csv_file', csvFile);
-        
-        const response = await fetch('http://localhost:8000/evaluate-model/', {
-            method: 'POST',
-            credentials: 'include',  // Importante para CORS con credenciales
-            body: formData
-            
-        });
-        
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('Error detallado:', errorText);
-            throw new Error(`Error ${response.status}: ${response.statusText}`);
+            const modelName = document.getElementById('modelo-evaluacion').value;
+            const csvFile = document.getElementById('archivo-evaluacion').files[0];
+
+            if (!csvFile) {
+                alert('Por favor selecciona un archivo CSV');
+                return;
+            }
+
+            document.getElementById('loading-evaluacion').style.display = 'block';
+
+            try {
+                const formData = new FormData();
+                formData.append('model_name', modelName);
+                formData.append('csv_file', csvFile);
+
+                const response = await fetch('http://localhost:8000/evaluate-model/?model_name=' + modelName, {
+                    method: 'POST',
+                    credentials: 'include',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Error detallado:', errorText);
+                    throw new Error(`Error ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                console.log('Respuesta completa del backend:', data);  // Útil para depuración
+                mostrarResultadosEvaluacion(data);
+
+            } catch (error) {
+                console.error('Error completo:', error);
+                alert(`Error al evaluar: ${error.message}`);
+            } finally {
+                document.getElementById('loading-evaluacion').style.display = 'none';
+            }
         }
-        
-        const data = await response.json();
-        mostrarResultadosEvaluacion(data);
-        
-    } catch (error) {
-        console.error('Error completo:', error);
-        alert(`Error al evaluar: ${error.message}`);
-    } finally {
-        document.getElementById('loading-evaluacion').style.display = 'none';
-    }
-}
+
+        function mostrarResultadosEvaluacion(data) {
+            const m = data.metrics;
+            const resultadosDiv = document.getElementById('resultados-evaluacion');
+            resultadosDiv.style.display = 'block';
+
+            resultadosDiv.innerHTML = `
+                <h3>Resultados de Evaluación del Modelo: ${data.model}</h3>
+                <ul>
+                    <li><strong>Exactitud:</strong> ${m.accuracy}</li>
+                    <li><strong>Precisión:</strong> ${m.precision}</li>
+                    <li><strong>Recall:</strong> ${m.recall}</li>
+                    <li><strong>F1 Score:</strong> ${m.f1_score}</li>
+                </ul>
+                <hr>
+                <h4>Estadísticas del Dataset</h4>
+                <ul>
+                    <li><strong>Muestras:</strong> ${data.dataset_stats.samples}</li>
+                    <li><strong>Características:</strong> ${data.dataset_stats.features}</li>
+                </ul>
+                <hr>
+                <h4>Matriz de Confusión</h4>
+                <table border="1" cellpadding="6">
+                    <tr><th></th><th>Predicho Positivo</th><th>Predicho Negativo</th></tr>
+                    <tr><th>Real Positivo</th><td>${m.confusion_matrix.true_positives}</td><td>${m.confusion_matrix.false_negatives}</td></tr>
+                    <tr><th>Real Negativo</th><td>${m.confusion_matrix.false_positives}</td><td>${m.confusion_matrix.true_negatives}</td></tr>
+                </table>
+            `;
+        }
     </script>
 </body>
 
