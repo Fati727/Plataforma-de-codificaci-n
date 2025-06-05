@@ -378,80 +378,74 @@
             }
         }
 
-function mostrarResultadosEvaluacion(data) {
-    const m = data.metrics;
-    const resultadosDiv = document.getElementById('resultados-evaluacion');
-    resultadosDiv.style.display = 'block';
+ function mostrarResultadosEvaluacion(data) {
+            const m = data.metrics;
+            const resultadosDiv = document.getElementById('resultados-evaluacion');
+            resultadosDiv.style.display = 'block';
 
-    // Primero renderizamos el contenido base
-    resultadosDiv.innerHTML = `
-        <h3>Resultados de Evaluación del Modelo: ${data.model}</h3>
-        <div class="metrics">
-            <div class="metric-card"><div class="metric-value">${m.accuracy}</div><div>Exactitud</div></div>
-            <div class="metric-card"><div class="metric-value">${m.precision}</div><div>Precisión</div></div>
-            <div class="metric-card"><div class="metric-value">${m.recall}</div><div>Recall</div></div>
-            <div class="metric-card"><div class="metric-value">${m.f1_score}</div><div>F1-Score</div></div>
-        </div>
-        <hr>
-        <h4>Estadísticas del Dataset</h4>
-        <ul>
-            <li><strong>Muestras:</strong> ${data.dataset_stats.samples}</li>
-            <li><strong>Características:</strong> ${data.dataset_stats.features}</li>
-        </ul>
-        <hr>
-        <h4>Matriz de Confusión</h4>
-        <table>
-            <tr>
-                <th></th>
-                <th>Predicho Positivo</th>
-                <th>Predicho Negativo</th>
-            </tr>
-            <tr>
-                <th>Real Positivo</th>
-                <td>${m.confusion_matrix.true_positives}</td>
-                <td>${m.confusion_matrix.false_negatives}</td>
-            </tr>
-            <tr>
-                <th>Real Negativo</th>
-                <td>${m.confusion_matrix.false_positives}</td>
-                <td>${m.confusion_matrix.true_negatives}</td>
-            </tr>
-        </table>
-        <div class="download-btn-container">
-            <button onclick="descargarResultados()">Descargar Reporte Completo</button>
-        </div>
-    `;
+            // Función para evaluar la calidad del resultado
+            const calidad = (valor) => {
+                if (valor >= 0.75) return {color: "#4caf50" };
+                if (valor >= 0.5) return {color: "#ff9800" };
+                return {color: "#f44336" };
+            };
 
-    // Ahora añadimos las barras cualitativas
-    const calidad = (valor) => {
-        if (valor >= 0.9) return { text: "Altísima", color: "#4caf50" };
-        if (valor >= 0.75) return { text: "Muy buena", color: "#2196f3" };
-        if (valor >= 0.5) return { text: "Aceptable", color: "#ff9800" };
-        return { text: "Baja", color: "#f44336" };
-    };
+            const barra = (nombre, valor) => {
+                const q = calidad(valor);
+                return `
+                    <div class="metric-label">${nombre}: (${(valor * 100).toFixed(1)}%)</div>
+                    <div class="metric-bar">
+                        <div class="metric-bar-fill" style="width: ${(valor * 100).toFixed(1)}%; background-color: ${q.color};">
+                            ${(valor * 100).toFixed(0)}%
+                        </div>
+                    </div>
+                `;
+            };
 
-    const barra = (nombre, valor) => {
-        const q = calidad(valor);
-        return `
-            <div class="metric-label">${nombre}: ${q.text} (${(valor * 100).toFixed(1)}%)</div>
-            <div class="metric-bar">
-                <div class="metric-bar-fill" style="width: ${(valor * 100).toFixed(1)}%; background-color: ${q.color};">
-                    ${(valor * 100).toFixed(0)}%
+            resultadosDiv.innerHTML = `
+                <h3>Resultados de Evaluación del Modelo: ${data.model}</h3>
+                <div class="metrics">
+                    <div class="metric-card"><div class="metric-value">${m.accuracy}</div><div>Exactitud</div></div>
+                    <div class="metric-card"><div class="metric-value">${m.precision}</div><div>Precisión</div></div>
+                    <div class="metric-card"><div class="metric-value">${m.recall}</div><div>Recall</div></div>
+                    <div class="metric-card"><div class="metric-value">${m.f1_score}</div><div>F1-Score</div></div>
                 </div>
-            </div>
-        `;
-    };
+                <hr>
+                <div class="qualitative-metrics">
+                    <h4>Evaluación Cualitativa</h4>
+                    ${barra("Exactitud", m.accuracy)}
+                    ${barra("Precisión", m.precision)}
+                    ${barra("Recall", m.recall)}
+                    ${barra("F1-Score", m.f1_score)}
+                </div>
+                <hr>
+                <h4>Matriz de Confusión</h4>
+                <table>
+                    <tr>
+                        <th></th>
+                        <th>Predicho Positivo</th>
+                        <th>Predicho Negativo</th>
+                    </tr>
+                    <tr>
+                        <th>Real Positivo</th>
+                        <td>${m.confusion_matrix.true_positives}</td>
+                        <td>${m.confusion_matrix.false_negatives}</td>
+                    </tr>
+                    <tr>
+                        <th>Real Negativo</th>
+                        <td>${m.confusion_matrix.false_positives}</td>
+                        <td>${m.confusion_matrix.true_negatives}</td>
+                    </tr>
+                </table>
+                <div class="download-btn-container">
+                    <button onclick="descargarResultados()">Descargar Reporte Completo</button>
+                </div>
+            `;
+        }
 
-    resultadosDiv.innerHTML += `
-        <div class="qualitative-metrics">
-            <h4>Evaluación Cualitativa</h4>
-            ${barra("Exactitud", m.accuracy)}
-            ${barra("Precisión", m.precision)}
-            ${barra("Recall", m.recall)}
-            ${barra("F1-Score", m.f1_score)}
-        </div>
-    `;
-}
+        function descargarResultados() {
+            alert("Función de descarga no implementada aún.");
+        }
     </script>
 </body>
 </html>

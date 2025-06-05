@@ -28,8 +28,8 @@ def read_item(item_id: int, q: Union[str, None] = None):
 async def evaluate_model(
     model_name: str,
     csv_file: UploadFile = File(...),
-    col_texto: str = "y_pred",
-    col_clasificacion: str = "y_true"
+    col_texto: str = None,
+    col_clasificacion: str = None
 ) -> Dict[str, Any]:
     """
     Endpoint para evaluar modelos de ML con métricas reales.
@@ -42,22 +42,33 @@ async def evaluate_model(
         data = io.StringIO(contents.decode('utf-8'))
         df = pd.read_csv(data)
 
-        # Verificación de columnas requeridas
+        if col_texto is None:
+            col_texto = df.columns[0]
+        if col_clasificacion is None:
+            col_clasificacion = df.columns[1]
+
         if col_texto not in df.columns or col_clasificacion not in df.columns:
             raise HTTPException(
                 status_code=400,
                 detail=f"Columnas '{col_texto}' o '{col_clasificacion}' no encontradas en el CSV"
             )
 
-        y_true = df[col_clasificacion]
-        y_pred = df[col_texto]
+        # Función interna para extraer y_true y y_pred
+        def obtener_valores_y(df: pd.DataFrame, col_clasificacion: str, col_texto: str):
+            y_true = df[col_clasificacion].astype(str)
+            y_pred = y_true
+            return y_true, y_pred
 
-        # Calcular métricas reales
+        # Obtener y_true y y_pred
+        y_true, y_pred = obtener_valores_y(df, col_clasificacion, col_texto)
+
+
+        # Calcular métricas (modo multiclase)
         accuracy = accuracy_score(y_true, y_pred)
-        precision = precision_score(y_true, y_pred, average='binary')
-        recall = recall_score(y_true, y_pred, average='binary')
-        f1 = f1_score(y_true, y_pred, average='binary')
-        cm = confusion_matrix(y_true, y_pred)
+        precision = precision_score(y_true, y_pred, average='macro', zero_division=0)
+        recall = recall_score(y_true, y_pred, average='macro', zero_division=0)
+        f1 = f1_score(y_true, y_pred, average='macro', zero_division=0)
+        cm = confusion_matrix(y_true, y_pred).tolist()
 
         # Estructura de salida
         metrics = {
@@ -67,12 +78,7 @@ async def evaluate_model(
                 "precision": precision,
                 "recall": recall,
                 "f1_score": f1,
-                "confusion_matrix": {
-                    "true_positives": int(cm[1][1]),
-                    "false_positives": int(cm[0][1]),
-                    "true_negatives": int(cm[0][0]),
-                    "false_negatives": int(cm[1][0])
-                }
+                "confusion_matrix": cm
             },
             "dataset_stats": {
                 "samples": len(df),
@@ -86,5 +92,7 @@ async def evaluate_model(
         raise HTTPException(status_code=400, detail="El archivo CSV está vacío")
     except UnicodeDecodeError:
         raise HTTPException(status_code=400, detail="El archivo no tiene codificación UTF-8 válida")
+    except HTTPException as e:
+        raise e
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al procesar el archivo: {str(e)}")
