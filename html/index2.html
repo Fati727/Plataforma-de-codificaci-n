@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -16,7 +17,8 @@
             background-color: #f5f7fa;
         }
 
-        h1, h2 {
+        h1,
+        h2 {
             color: #2c3e50;
         }
 
@@ -143,8 +145,13 @@
         }
 
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
 
         /* Tabla de resultados */
@@ -155,7 +162,8 @@
             font-size: 16px;
         }
 
-        th, td {
+        th,
+        td {
             padding: 12px 15px;
             text-align: center;
             border-bottom: 1px solid #ddd;
@@ -176,36 +184,37 @@
             justify-content: center;
             margin-top: 20px;
         }
-            .qualitative-metrics {
-        margin-top: 20px;
-    }
 
-    .metric-bar {
-        background-color: #eee;
-        border-radius: 10px;
-        overflow: hidden;
-        height: 20px;
-        margin-bottom: 10px;
-        position: relative;
-    }
+        .qualitative-metrics {
+            margin-top: 20px;
+        }
 
-    .metric-bar-fill {
-        height: 100%;
-        text-align: right;
-        padding-right: 10px;
-        color: white;
-        font-size: 14px;
-        line-height: 20px;
-        border-radius: 10px;
-    }
+        .metric-bar {
+            background-color: #eee;
+            border-radius: 10px;
+            overflow: hidden;
+            height: 20px;
+            margin-bottom: 10px;
+            position: relative;
+        }
 
-    .metric-label {
-        margin-bottom: 5px;
-        font-weight: bold;
-    }
+        .metric-bar-fill {
+            height: 100%;
+            text-align: right;
+            padding-right: 10px;
+            color: white;
+            font-size: 14px;
+            line-height: 20px;
+            border-radius: 10px;
+        }
 
+        .metric-label {
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
     </style>
 </head>
+
 <body>
     <header>
         <h1>Plataforma de Adopción de LLMs</h1>
@@ -244,6 +253,11 @@
         <div class="form-group">
             <label for="archivo-evaluacion">Suba su archivo CSV:</label>
             <input type="file" id="archivo-evaluacion" accept=".csv">
+        </div>
+
+        <div class="form-group">
+            <label for="columnDropdown">Seleccione una columna:</label>
+            <select id="columnDropdown"></select>
         </div>
 
         <button onclick="evaluarModelo()">Ejecutar Evaluación</button>
@@ -290,10 +304,22 @@
     <div id="resultados-evaluacion" class="results">
         <h3>Resultados de Evaluación del Modelo</h3>
         <div class="metrics">
-            <div class="metric-card"><div class="metric-value"></div><div>Exactitud</div></div>
-            <div class="metric-card"><div class="metric-value"></div><div>Precisión</div></div>
-            <div class="metric-card"><div class="metric-value"></div><div>Recall</div></div>
-            <div class="metric-card"><div class="metric-value"></div><div>F1-Score</div></div>
+            <div class="metric-card">
+                <div class="metric-value"></div>
+                <div>Exactitud</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value"></div>
+                <div>Precisión</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value"></div>
+                <div>Recall</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value"></div>
+                <div>F1-Score</div>
+            </div>
         </div>
         <hr>
         <h4>Estadísticas del Dataset</h4>
@@ -324,128 +350,161 @@
             <button onclick="descargarResultados()">Descargar Reporte Completo</button>
         </div>
     </div>
+<!-- Carga de PapaParse -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 
-    <script>
-        function showForm(formType) {
-            document.querySelectorAll('.form-container').forEach(form => form.style.display = 'none');
-            document.querySelectorAll('.results').forEach(result => result.style.display = 'none');
+<script>
+    // Manejo del archivo CSV para extraer columnas y llenar dropdown
+    document.getElementById('archivo-evaluacion').addEventListener('change', function (e) {
+        const file = e.target.files[0];
+        if (!file) return;
 
-            if (formType === 'evaluacion') {
-                document.getElementById('evaluacion-form').style.display = 'block';
-            } else if (formType === 'fine-tuning') {
-                document.getElementById('fine-tuning-form').style.display = 'block';
-            } else if (formType === 'entrenamiento') {
-                alert('Formulario de entrenamiento desde cero');
+        Papa.parse(file, {
+            header: true,
+            dynamicTyping: true,
+            complete: function (results) {
+                const columnNames = Object.keys(results.data[0] || {});
+                llenarDropdown(columnNames);
             }
+        });
+    });
+
+    function llenarDropdown(columnas) {
+        const dropdown = document.getElementById('columnDropdown');
+        dropdown.innerHTML = ''; // limpia opciones anteriores
+
+        columnas.forEach(col => {
+            const option = document.createElement('option');
+            option.value = col;
+            option.textContent = col;
+            dropdown.appendChild(option);
+        });
+    }
+
+    // Función para mostrar formularios según el tipo
+    function showForm(formType) {
+        document.querySelectorAll('.form-container').forEach(form => form.style.display = 'none');
+        document.querySelectorAll('.results').forEach(result => result.style.display = 'none');
+
+        if (formType === 'evaluacion') {
+            document.getElementById('evaluacion-form').style.display = 'block';
+        } else if (formType === 'fine-tuning') {
+            document.getElementById('fine-tuning-form').style.display = 'block';
+        } else if (formType === 'entrenamiento') {
+            alert('Formulario de entrenamiento desde cero');
+        }
+    }
+
+    // Enviar el archivo y modelo al backend y mostrar resultados
+    async function evaluarModelo() {
+        const modelName = document.getElementById('modelo-evaluacion').value;
+        const csvFile = document.getElementById('archivo-evaluacion').files[0];
+
+        if (!csvFile) {
+            alert('Por favor selecciona un archivo CSV');
+            return;
         }
 
-        async function evaluarModelo() {
-            const modelName = document.getElementById('modelo-evaluacion').value;
-            const csvFile = document.getElementById('archivo-evaluacion').files[0];
+        document.getElementById('loading-evaluacion').style.display = 'block';
 
-            if (!csvFile) {
-                alert('Por favor selecciona un archivo CSV');
-                return;
+        try {
+            const formData = new FormData();
+            formData.append('model_name', modelName);
+            formData.append('csv_file', csvFile);
+
+            const response = await fetch('http://localhost:8000/evaluate-model/?model_name=' + modelName, {
+                method: 'POST',
+                credentials: 'include',
+                body: formData
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Error detallado:', errorText);
+                throw new Error(`Error ${response.status}: ${response.statusText}`);
             }
 
-            document.getElementById('loading-evaluacion').style.display = 'block';
+            const data = await response.json();
+            mostrarResultadosEvaluacion(data);
 
-            try {
-                const formData = new FormData();
-                formData.append('model_name', modelName);
-                formData.append('csv_file', csvFile);
-
-                const response = await fetch('http://localhost:8000/evaluate-model/?model_name=' + modelName, {
-                    method: 'POST',
-                    credentials: 'include',
-                    body: formData
-                });
-
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    console.error('Error detallado:', errorText);
-                    throw new Error(`Error ${response.status}: ${response.statusText}`);
-                }
-
-                const data = await response.json();
-                mostrarResultadosEvaluacion(data);
-
-            } catch (error) {
-                console.error('Error completo:', error);
-                alert(`Error al evaluar: ${error.message}`);
-            } finally {
-                document.getElementById('loading-evaluacion').style.display = 'none';
-            }
+        } catch (error) {
+            console.error('Error completo:', error);
+            alert(`Error al evaluar: ${error.message}`);
+        } finally {
+            document.getElementById('loading-evaluacion').style.display = 'none';
         }
+    }
 
- function mostrarResultadosEvaluacion(data) {
-            const m = data.metrics;
-            const resultadosDiv = document.getElementById('resultados-evaluacion');
-            resultadosDiv.style.display = 'block';
+    // Mostrar métricas y matriz de confusión
+    function mostrarResultadosEvaluacion(data) {
+        const m = data.metrics;
+        const resultadosDiv = document.getElementById('resultados-evaluacion');
+        resultadosDiv.style.display = 'block';
 
-            // Función para evaluar la calidad del resultado
-            const calidad = (valor) => {
-                if (valor >= 0.75) return {color: "#4caf50" };
-                if (valor >= 0.5) return {color: "#ff9800" };
-                return {color: "#f44336" };
-            };
+        const calidad = (valor) => {
+            if (valor >= 0.75) return { color: "#4caf50" };
+            if (valor >= 0.5) return { color: "#ff9800" };
+            return { color: "#f44336" };
+        };
 
-            const barra = (nombre, valor) => {
-                const q = calidad(valor);
-                return `
-                    <div class="metric-label">${nombre}: (${(valor * 100).toFixed(1)}%)</div>
-                    <div class="metric-bar">
-                        <div class="metric-bar-fill" style="width: ${(valor * 100).toFixed(1)}%; background-color: ${q.color};">
-                            ${(valor * 100).toFixed(0)}%
-                        </div>
+        const barra = (nombre, valor) => {
+            const q = calidad(valor);
+            return `
+                <div class="metric-label">${nombre}: (${(valor * 100).toFixed(1)}%)</div>
+                <div class="metric-bar">
+                    <div class="metric-bar-fill" style="width: ${(valor * 100).toFixed(1)}%; background-color: ${q.color};">
+                        ${(valor * 100).toFixed(0)}%
                     </div>
-                `;
-            };
-
-            resultadosDiv.innerHTML = `
-                <h3>Resultados de Evaluación del Modelo: ${data.model}</h3>
-                <div class="metrics">
-                    <div class="metric-card"><div class="metric-value">${m.accuracy}</div><div>Exactitud</div></div>
-                    <div class="metric-card"><div class="metric-value">${m.precision}</div><div>Precisión</div></div>
-                    <div class="metric-card"><div class="metric-value">${m.recall}</div><div>Recall</div></div>
-                    <div class="metric-card"><div class="metric-value">${m.f1_score}</div><div>F1-Score</div></div>
-                </div>
-                <hr>
-                <div class="qualitative-metrics">
-                    <h4>Evaluación Cualitativa</h4>
-                    ${barra("Exactitud", m.accuracy)}
-                    ${barra("Precisión", m.precision)}
-                    ${barra("Recall", m.recall)}
-                    ${barra("F1-Score", m.f1_score)}
-                </div>
-                <hr>
-                <h4>Matriz de Confusión</h4>
-                <table>
-                    <tr>
-                        <th></th>
-                        <th>Predicho Positivo</th>
-                        <th>Predicho Negativo</th>
-                    </tr>
-                    <tr>
-                        <th>Real Positivo</th>
-                        <td>${m.confusion_matrix.true_positives}</td>
-                        <td>${m.confusion_matrix.false_negatives}</td>
-                    </tr>
-                    <tr>
-                        <th>Real Negativo</th>
-                        <td>${m.confusion_matrix.false_positives}</td>
-                        <td>${m.confusion_matrix.true_negatives}</td>
-                    </tr>
-                </table>
-                <div class="download-btn-container">
-                    <button onclick="descargarResultados()">Descargar Reporte Completo</button>
                 </div>
             `;
-        }
+        };
 
-        function descargarResultados() {
-            alert("Función de descarga no implementada aún.");
-        }
-    </script>
+        resultadosDiv.innerHTML = `
+            <h3>Resultados de Evaluación del Modelo: ${data.model}</h3>
+            <div class="metrics">
+                <div class="metric-card"><div class="metric-value">${m.accuracy}</div><div>Exactitud</div></div>
+                <div class="metric-card"><div class="metric-value">${m.precision}</div><div>Precisión</div></div>
+                <div class="metric-card"><div class="metric-value">${m.recall}</div><div>Recall</div></div>
+                <div class="metric-card"><div class="metric-value">${m.f1_score}</div><div>F1-Score</div></div>
+            </div>
+            <hr>
+            <div class="qualitative-metrics">
+                <h4>Evaluación Cualitativa</h4>
+                ${barra("Exactitud", m.accuracy)}
+                ${barra("Precisión", m.precision)}
+                ${barra("Recall", m.recall)}
+                ${barra("F1-Score", m.f1_score)}
+            </div>
+            <hr>
+            <h4>Matriz de Confusión</h4>
+            <table>
+                <tr>
+                    <th></th>
+                    <th>Predicho Positivo</th>
+                    <th>Predicho Negativo</th>
+                </tr>
+                <tr>
+                    <th>Real Positivo</th>
+                    <td>${m.confusion_matrix.true_positives}</td>
+                    <td>${m.confusion_matrix.false_negatives}</td>
+                </tr>
+                <tr>
+                    <th>Real Negativo</th>
+                    <td>${m.confusion_matrix.false_positives}</td>
+                    <td>${m.confusion_matrix.true_negatives}</td>
+                </tr>
+            </table>
+            <div class="download-btn-container">
+                <button onclick="descargarResultados()">Descargar Reporte Completo</button>
+            </div>
+        `;
+    }
+
+    // Función para descargar (aún no implementada)
+    function descargarResultados() {
+        alert("Función de descarga no implementada aún.");
+    }
+</script>
 </body>
+
 </html>
