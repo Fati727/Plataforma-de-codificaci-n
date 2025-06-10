@@ -256,8 +256,13 @@
         </div>
 
         <div class="form-group">
-            <label for="columnDropdown">Seleccione una columna:</label>
+            <label for="columnDropdown">Seleccione una columna de texto :</label>
             <select id="columnDropdown"></select>
+        </div>
+        <div class="form-group">
+            <!-- Selección de columna de clasificación -->
+            <label for="columnClassDropdown">Selecciona la columna de clasificación:</label>
+            <select id="columnClassDropdown"></select>
         </div>
 
         <button onclick="evaluarModelo()">Ejecutar Evaluación</button>
@@ -350,106 +355,120 @@
             <button onclick="descargarResultados()">Descargar Reporte Completo</button>
         </div>
     </div>
-<!-- Carga de PapaParse -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <!-- Carga de PapaParse -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 
-<script>
-    // Manejo del archivo CSV para extraer columnas y llenar dropdown
-    document.getElementById('archivo-evaluacion').addEventListener('change', function (e) {
-        const file = e.target.files[0];
-        if (!file) return;
+    <script>
+        // Manejo del archivo CSV para extraer columnas y llenar los dropdowns
+        document.getElementById('archivo-evaluacion').addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (!file) return;
 
-        Papa.parse(file, {
-            header: true,
-            dynamicTyping: true,
-            complete: function (results) {
-                const columnNames = Object.keys(results.data[0] || {});
-                llenarDropdown(columnNames);
-            }
-        });
-    });
-
-    function llenarDropdown(columnas) {
-        const dropdown = document.getElementById('columnDropdown');
-        dropdown.innerHTML = ''; // limpia opciones anteriores
-
-        columnas.forEach(col => {
-            const option = document.createElement('option');
-            option.value = col;
-            option.textContent = col;
-            dropdown.appendChild(option);
-        });
-    }
-
-    // Función para mostrar formularios según el tipo
-    function showForm(formType) {
-        document.querySelectorAll('.form-container').forEach(form => form.style.display = 'none');
-        document.querySelectorAll('.results').forEach(result => result.style.display = 'none');
-
-        if (formType === 'evaluacion') {
-            document.getElementById('evaluacion-form').style.display = 'block';
-        } else if (formType === 'fine-tuning') {
-            document.getElementById('fine-tuning-form').style.display = 'block';
-        } else if (formType === 'entrenamiento') {
-            alert('Formulario de entrenamiento desde cero');
-        }
-    }
-
-    // Enviar el archivo y modelo al backend y mostrar resultados
-    async function evaluarModelo() {
-        const modelName = document.getElementById('modelo-evaluacion').value;
-        const csvFile = document.getElementById('archivo-evaluacion').files[0];
-
-        if (!csvFile) {
-            alert('Por favor selecciona un archivo CSV');
-            return;
-        }
-
-        document.getElementById('loading-evaluacion').style.display = 'block';
-
-        try {
-            const formData = new FormData();
-            formData.append('model_name', modelName);
-            formData.append('csv_file', csvFile);
-
-            const response = await fetch('http://localhost:8000/evaluate-model/?model_name=' + modelName, {
-                method: 'POST',
-                credentials: 'include',
-                body: formData
+            Papa.parse(file, {
+                header: true,
+                dynamicTyping: true,
+                complete: function (results) {
+                    const columnNames = Object.keys(results.data[0] || {});
+                    llenarDropdown(columnNames);
+                }
             });
+        });
 
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error('Error detallado:', errorText);
-                throw new Error(`Error ${response.status}: ${response.statusText}`);
+        // Llena los dropdowns de columna de entrada y clasificación
+        function llenarDropdown(columnas) {
+            const inputDropdown = document.getElementById('columnDropdown');
+            const classDropdown = document.getElementById('columnClassDropdown');
+
+            inputDropdown.innerHTML = '';
+            classDropdown.innerHTML = '';
+
+            columnas.forEach(col => {
+                const option1 = document.createElement('option');
+                option1.value = col;
+                option1.textContent = col;
+                inputDropdown.appendChild(option1);
+
+                const option2 = document.createElement('option');
+                option2.value = col;
+                option2.textContent = col;
+                classDropdown.appendChild(option2);
+            });
+        }
+
+        // Muestra el formulario correspondiente
+        function showForm(formType) {
+            document.querySelectorAll('.form-container').forEach(form => form.style.display = 'none');
+            document.querySelectorAll('.results').forEach(result => result.style.display = 'none');
+
+            if (formType === 'evaluacion') {
+                document.getElementById('evaluacion-form').style.display = 'block';
+            } else if (formType === 'fine-tuning') {
+                document.getElementById('fine-tuning-form').style.display = 'block';
+            } else if (formType === 'entrenamiento') {
+                alert('Formulario de entrenamiento desde cero');
+            }
+        }
+
+        // Enviar archivo y opciones al backend
+        async function evaluarModelo() {
+            const modelName = document.getElementById('modelo-evaluacion').value;
+            const csvFile = document.getElementById('archivo-evaluacion').files[0];
+
+            if (!csvFile) {
+                alert('Por favor selecciona un archivo CSV');
+                return;
             }
 
-            const data = await response.json();
-            mostrarResultadosEvaluacion(data);
+            const inputColumn = document.getElementById('columnDropdown').value;
+            const classColumn = document.getElementById('columnClassDropdown').value;
 
-        } catch (error) {
-            console.error('Error completo:', error);
-            alert(`Error al evaluar: ${error.message}`);
-        } finally {
-            document.getElementById('loading-evaluacion').style.display = 'none';
+            document.getElementById('loading-evaluacion').style.display = 'block';
+
+            try {
+                const formData = new FormData();
+                formData.append('model_name', modelName);
+                formData.append('csv_file', csvFile);
+                formData.append('input_column', inputColumn);
+                formData.append('class_column', classColumn);
+
+                const response = await fetch('http://localhost:8000/evaluate-model/?model_name=' + modelName, {
+                    method: 'POST',
+                    credentials: 'include',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Error detallado:', errorText);
+                    throw new Error(`Error ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                mostrarResultadosEvaluacion(data);
+
+            } catch (error) {
+                console.error('Error completo:', error);
+                alert(`Error al evaluar: ${error.message}`);
+            } finally {
+                document.getElementById('loading-evaluacion').style.display = 'none';
+            }
         }
-    }
 
-    // Mostrar métricas y matriz de confusión
-    function mostrarResultadosEvaluacion(data) {
-        const m = data.metrics;
-        const resultadosDiv = document.getElementById('resultados-evaluacion');
-        resultadosDiv.style.display = 'block';
+        // Mostrar métricas y matriz de confusión
+        function mostrarResultadosEvaluacion(data) {
+            const m = data.metrics;
+            const resultadosDiv = document.getElementById('resultados-evaluacion');
+            resultadosDiv.style.display = 'block';
 
-        const calidad = (valor) => {
-            if (valor >= 0.75) return { color: "#4caf50" };
-            if (valor >= 0.5) return { color: "#ff9800" };
-            return { color: "#f44336" };
-        };
+            const calidad = (valor) => {
+                if (valor >= 0.75) return { color: "#4caf50" };
+                if (valor >= 0.5) return { color: "#ff9800" };
+                return { color: "#f44336" };
+            };
 
-        const barra = (nombre, valor) => {
-            const q = calidad(valor);
-            return `
+            const barra = (nombre, valor) => {
+                const q = calidad(valor);
+                return `
                 <div class="metric-label">${nombre}: (${(valor * 100).toFixed(1)}%)</div>
                 <div class="metric-bar">
                     <div class="metric-bar-fill" style="width: ${(valor * 100).toFixed(1)}%; background-color: ${q.color};">
@@ -457,9 +476,9 @@
                     </div>
                 </div>
             `;
-        };
+            };
 
-        resultadosDiv.innerHTML = `
+            resultadosDiv.innerHTML = `
             <h3>Resultados de Evaluación del Modelo: ${data.model}</h3>
             <div class="metrics">
                 <div class="metric-card"><div class="metric-value">${m.accuracy}</div><div>Exactitud</div></div>
@@ -498,13 +517,13 @@
                 <button onclick="descargarResultados()">Descargar Reporte Completo</button>
             </div>
         `;
-    }
+        }
 
-    // Función para descargar (aún no implementada)
-    function descargarResultados() {
-        alert("Función de descarga no implementada aún.");
-    }
-</script>
+        // Descarga de resultados (por implementar)
+        function descargarResultados() {
+            alert("Función de descarga no implementada aún.");
+        }
+    </script>
 </body>
 
 </html>
