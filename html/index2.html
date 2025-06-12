@@ -212,7 +212,15 @@
             margin-bottom: 5px;
             font-weight: bold;
         }
+
+        /* Estilo para el gráfico de radar */
+        .radar-container {
+            margin: 30px auto;
+            max-width: 500px;
+        }
     </style>
+    <!-- Carga de Chart.js para gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body>
@@ -256,11 +264,10 @@
         </div>
 
         <div class="form-group">
-            <label for="columnDropdown">Seleccione una columna de texto :</label>
+            <label for="columnDropdown">Seleccione una columna de texto:</label>
             <select id="columnDropdown"></select>
         </div>
         <div class="form-group">
-            <!-- Selección de columna de clasificación -->
             <label for="columnClassDropdown">Selecciona la columna de clasificación:</label>
             <select id="columnClassDropdown"></select>
         </div>
@@ -307,55 +314,10 @@
     </div>
 
     <div id="resultados-evaluacion" class="results">
-        <h3>Resultados de Evaluación del Modelo</h3>
-        <div class="metrics">
-            <div class="metric-card">
-                <div class="metric-value"></div>
-                <div>Exactitud</div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-value"></div>
-                <div>Precisión</div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-value"></div>
-                <div>Recall</div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-value"></div>
-                <div>F1-Score</div>
-            </div>
-        </div>
-        <hr>
-        <h4>Estadísticas del Dataset</h4>
-        <ul>
-            <li><strong>Muestras:</strong> 1000</li>
-            <li><strong>Características:</strong> 50</li>
-        </ul>
-        <hr>
-        <h4>Matriz de Confusión</h4>
-        <table>
-            <tr>
-                <th></th>
-                <th>Predicho Positivo</th>
-                <th>Predicho Negativo</th>
-            </tr>
-            <tr>
-                <th>Real Positivo</th>
-                <td>500</td>
-                <td>100</td>
-            </tr>
-            <tr>
-                <th>Real Negativo</th>
-                <td>50</td>
-                <td>350</td>
-            </tr>
-        </table>
-        <div class="download-btn-container">
-            <button onclick="descargarResultados()">Descargar Reporte Completo</button>
-        </div>
+        <!-- Este contenido será reemplazado dinámicamente por JavaScript -->
     </div>
-    <!-- Carga de PapaParse -->
+
+    <!-- Carga de PapaParse para manejo de CSV -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 
     <script>
@@ -486,6 +448,11 @@
                 <div class="metric-card"><div class="metric-value">${m.recall}</div><div>Recall</div></div>
                 <div class="metric-card"><div class="metric-value">${m.f1_score}</div><div>F1-Score</div></div>
             </div>
+
+            <div class="radar-container">
+                <canvas id="radarChart"></canvas>
+            </div>
+
             <hr>
             <div class="qualitative-metrics">
                 <h4>Evaluación Cualitativa</h4>
@@ -517,13 +484,80 @@
                 <button onclick="descargarResultados()">Descargar Reporte Completo</button>
             </div>
         `;
+
+            // Crear el gráfico de radar después de que se haya renderizado el HTML
+            setTimeout(() => {
+                const radarData = {
+                    labels: ['Exactitud', 'Precisión', 'Recall', 'F1-score'],
+                    datasets: [{
+                        label: 'Métricas del modelo',
+                        data: [m.accuracy, m.precision, m.recall, m.f1_score],
+                        fill: true,
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        borderColor: 'rgb(54, 162, 235)',
+                        pointBackgroundColor: 'rgb(54, 162, 235)',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgb(54, 162, 235)'
+                    }]
+                };
+
+                const radarConfig = {
+                    type: 'radar',
+                    data: radarData,
+                    options: {
+                        responsive: true,
+                        scales: {
+                            r: {
+                                beginAtZero: true,
+                                max: 1,
+                                ticks: {
+                                    stepSize: 0.2
+                                }
+                            }
+                        },
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Resumen de Métricas del Modelo',
+                                font: {
+                                    size: 16
+                                }
+                            },
+                            legend: {
+                                display: false
+                            }
+                        },
+                        elements: {
+                            line: {
+                                tension: 0.1
+                            }
+                        }
+                    }
+                };
+
+                new Chart(
+                    document.getElementById('radarChart'),
+                    radarConfig
+                );
+            }, 100);
         }
 
         // Descarga de resultados (por implementar)
         function descargarResultados() {
             alert("Función de descarga no implementada aún.");
         }
+
+        // Función para fine tuning (simulada)
+        function ejecutarFineTuning() {
+            document.getElementById('loading-fine-tuning').style.display = 'block';
+            
+            // Simulamos un proceso de fine tuning con un timeout
+            setTimeout(() => {
+                document.getElementById('loading-fine-tuning').style.display = 'none';
+                alert("Fine tuning completado exitosamente. El modelo ajustado ha sido guardado.");
+            }, 3000);
+        }
     </script>
 </body>
-
 </html>
