@@ -185,29 +185,6 @@
             margin-top: 20px;
         }
 
-        .qualitative-metrics {
-            margin-top: 20px;
-        }
-
-        .metric-bar {
-            background-color: #eee;
-            border-radius: 10px;
-            overflow: hidden;
-            height: 20px;
-            margin-bottom: 10px;
-            position: relative;
-        }
-
-        .metric-bar-fill {
-            height: 100%;
-            text-align: right;
-            padding-right: 10px;
-            color: white;
-            font-size: 14px;
-            line-height: 20px;
-            border-radius: 10px;
-        }
-
         .metric-label {
             margin-bottom: 5px;
             font-weight: bold;
@@ -422,24 +399,6 @@
             const resultadosDiv = document.getElementById('resultados-evaluacion');
             resultadosDiv.style.display = 'block';
 
-            const calidad = (valor) => {
-                if (valor >= 0.75) return { color: "#4caf50" };
-                if (valor >= 0.5) return { color: "#ff9800" };
-                return { color: "#f44336" };
-            };
-
-            const barra = (nombre, valor) => {
-                const q = calidad(valor);
-                return `
-                <div class="metric-label">${nombre}: (${(valor * 100).toFixed(1)}%)</div>
-                <div class="metric-bar">
-                    <div class="metric-bar-fill" style="width: ${(valor * 100).toFixed(1)}%; background-color: ${q.color};">
-                        ${(valor * 100).toFixed(0)}%
-                    </div>
-                </div>
-            `;
-            };
-
             resultadosDiv.innerHTML = `
             <h3>Resultados de Evaluación del Modelo: ${data.model}</h3>
             <div class="metrics">
@@ -452,16 +411,6 @@
             <div class="radar-container">
                 <canvas id="radarChart"></canvas>
             </div>
-
-            <hr>
-            <div class="qualitative-metrics">
-                <h4>Evaluación Cualitativa</h4>
-                ${barra("Exactitud", m.accuracy)}
-                ${barra("Precisión", m.precision)}
-                ${barra("Recall", m.recall)}
-                ${barra("F1-Score", m.f1_score)}
-            </div>
-            <hr>
             <h4>Matriz de Confusión</h4>
             <table>
                 <tr>
@@ -485,7 +434,7 @@
             </div>
         `;
 
-            // Crear el gráfico de radar después de que se haya renderizado el HTML
+            // gráfico de radar 
             setTimeout(() => {
                 const radarData = {
                     labels: ['Exactitud', 'Precisión', 'Recall', 'F1-score'],
