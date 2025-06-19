@@ -195,6 +195,13 @@
             margin: 30px auto;
             max-width: 500px;
         }
+
+        .avance {
+            margin-top: 15px;
+            font-size: 16px;
+            color: #333;
+            display: none;
+        }
     </style>
 
 </head>
@@ -287,6 +294,10 @@
             <div class="spinner"></div>
             <p>Realizando fine tuning, esto puede tomar varios minutos...</p>
         </div>
+
+        <div id="avance-fine-tuning" class="avance">
+            <p><strong>Pasos de entrenamiento:</strong> <span id="pasos-entrenamiento">0</span></p>
+        </div>
     </div>
 
     <div id="resultados-evaluacion" class="results">
@@ -295,7 +306,7 @@
 
     <!-- Carga de PapaParse para manejo de CSV -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
-     <!-- Carga de Chart.js para gráficos -->
+    <!-- Carga de Chart.js para gráficos -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
@@ -496,118 +507,136 @@
         }
 
         // Descarga de resultados 
- async function descargarResultados() {
-    const resultadosDiv = document.getElementById('resultados-evaluacion');
-    if (!resultadosDiv || resultadosDiv.style.display === 'none') {
-        alert("Primero realiza una evaluación para poder descargar el reporte.");
-        return;
-    }
+        async function descargarResultados() {
+            const resultadosDiv = document.getElementById('resultados-evaluacion');
+            if (!resultadosDiv || resultadosDiv.style.display === 'none') {
+                alert("Primero realiza una evaluación para poder descargar el reporte.");
+                return;
+            }
 
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    const date = new Date();
-    const fechaHora = date.toLocaleString();
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const date = new Date();
+            const fechaHora = date.toLocaleString();
 
-    const modelName = document.querySelector('#resultados-evaluacion h3')?.innerText || "Modelo Desconocido";
-    const metricValues = document.querySelectorAll('.metric-value');
-    const tableCells = document.querySelectorAll('table td');
+            const modelName = document.querySelector('#resultados-evaluacion h3')?.innerText || "Modelo Desconocido";
+            const metricValues = document.querySelectorAll('.metric-value');
+            const tableCells = document.querySelectorAll('table td');
 
-    const exactitud = metricValues[0]?.innerText || "N/A";
-    const precision = metricValues[1]?.innerText || "N/A";
-    const recall = metricValues[2]?.innerText || "N/A";
-    const f1 = metricValues[3]?.innerText || "N/A";
+            const exactitud = metricValues[0]?.innerText || "N/A";
+            const precision = metricValues[1]?.innerText || "N/A";
+            const recall = metricValues[2]?.innerText || "N/A";
+            const f1 = metricValues[3]?.innerText || "N/A";
 
-    const tp = tableCells[0]?.innerText || "N/A";
-    const fn = tableCells[1]?.innerText || "N/A";
-    const fp = tableCells[2]?.innerText || "N/A";
-    const tn = tableCells[3]?.innerText || "N/A";
+            const tp = tableCells[0]?.innerText || "N/A";
+            const fn = tableCells[1]?.innerText || "N/A";
+            const fp = tableCells[2]?.innerText || "N/A";
+            const tn = tableCells[3]?.innerText || "N/A";
 
-    // === ENCABEZADO ===
-    doc.setFillColor(33, 150, 243); // azul moderno
-    doc.rect(0, 0, 210, 20, 'F');
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(16);
-    doc.setFont("helvetica", "bold");
-    doc.text("Reporte de Evaluación de Modelo", 105, 12, null, null, 'center');
+            // === ENCABEZADO ===
+            doc.setFillColor(33, 150, 243); // azul moderno
+            doc.rect(0, 0, 210, 20, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(16);
+            doc.setFont("helvetica", "bold");
+            doc.text("Reporte de Evaluación de Modelo", 105, 12, null, null, 'center');
 
-    let y = 30;
-    doc.setTextColor(0, 0, 0);
-    doc.setFontSize(11);
-    doc.setFont("helvetica", "normal");
-    doc.text(`Fecha y hora: ${fechaHora}`, 20, y); y += 10;
+            let y = 30;
+            doc.setTextColor(0, 0, 0);
+            doc.setFontSize(11);
+            doc.setFont("helvetica", "normal");
+            doc.text(`Fecha y hora: ${fechaHora}`, 20, y); y += 10;
 
-    // === Modelo ===
-    doc.setFont("helvetica", "bold");
-    doc.text("Modelo evaluado:", 20, y);
-    doc.setFont("helvetica", "normal");
-    doc.text(modelName, 60, y); y += 10;
+            // === Modelo ===
+            doc.setFont("helvetica", "bold");
+            doc.text("Modelo evaluado:", 20, y);
+            doc.setFont("helvetica", "normal");
+            doc.text(modelName, 60, y); y += 10;
 
-    // === Métricas ===
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(13);
-    doc.text("Métricas de Rendimiento", 20, y); y += 5;
-    doc.setDrawColor(200);
-    doc.line(20, y, 190, y); y += 6;
+            // === Métricas ===
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(13);
+            doc.text("Métricas de Rendimiento", 20, y); y += 5;
+            doc.setDrawColor(200);
+            doc.line(20, y, 190, y); y += 6;
 
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(11);
-    doc.text(`Exactitud:  ${exactitud}`, 25, y); y += 6;
-    doc.text(`Precisión:  ${precision}`, 25, y); y += 6;
-    doc.text(`Recall:     ${recall}`, 25, y); y += 6;
-    doc.text(`F1-Score:   ${f1}`, 25, y); y += 12;
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(11);
+            doc.text(`Exactitud:  ${exactitud}`, 25, y); y += 6;
+            doc.text(`Precisión:  ${precision}`, 25, y); y += 6;
+            doc.text(`Recall:     ${recall}`, 25, y); y += 6;
+            doc.text(`F1-Score:   ${f1}`, 25, y); y += 12;
 
-    // === MATRIZ DE CONFUSIÓN ===
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(13);
-    doc.text("Matriz de Confusión", 20, y); y += 5;
-    doc.line(20, y, 190, y); y += 4;
+            // === MATRIZ DE CONFUSIÓN ===
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(13);
+            doc.text("Matriz de Confusión", 20, y); y += 5;
+            doc.line(20, y, 190, y); y += 4;
 
-    doc.autoTable({
-        startY: y,
-        head: [['', 'Predicho Positivo', 'Predicho Negativo']],
-        body: [
-            ['Real Positivo', tp, fn],
-            ['Real Negativo', fp, tn]
-        ],
-        theme: 'grid',
-        styles: {
-            halign: 'center',
-            valign: 'middle',
-            fontSize: 11
-        },
-        headStyles: {
-            fillColor: [33, 150, 243],
-            textColor: 255,
-            fontStyle: 'bold'
+            doc.autoTable({
+                startY: y,
+                head: [['', 'Predicho Positivo', 'Predicho Negativo']],
+                body: [
+                    ['Real Positivo', tp, fn],
+                    ['Real Negativo', fp, tn]
+                ],
+                theme: 'grid',
+                styles: {
+                    halign: 'center',
+                    valign: 'middle',
+                    fontSize: 11
+                },
+                headStyles: {
+                    fillColor: [33, 150, 243],
+                    textColor: 255,
+                    fontStyle: 'bold'
+                }
+            });
+
+            const finalY = doc.lastAutoTable.finalY || y + 20;
+
+            // === GRÁFICA EN NUEVA PÁGINA ===
+            const canvas = document.getElementById('radarChart');
+            if (canvas) {
+                const imgData = canvas.toDataURL('image/png');
+                doc.addPage();
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(14);
+                doc.text("Gráfica de Radar - Métricas del Modelo", 105, 20, null, null, 'center');
+                doc.addImage(imgData, 'PNG', 15, 30, 180, 120);
+            }
+
+            doc.save('reporte_modelo.pdf');
         }
-    });
-
-    const finalY = doc.lastAutoTable.finalY || y + 20;
-
-    // === GRÁFICA EN NUEVA PÁGINA ===
-    const canvas = document.getElementById('radarChart');
-    if (canvas) {
-        const imgData = canvas.toDataURL('image/png');
-        doc.addPage();
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(14);
-        doc.text("Gráfica de Radar - Métricas del Modelo", 105, 20, null, null, 'center');
-        doc.addImage(imgData, 'PNG', 15, 30, 180, 120);
-    }
-
-    doc.save('reporte_modelo.pdf');
-}
 
         // Función para fine tuning (simulada)
         function ejecutarFineTuning() {
             document.getElementById('loading-fine-tuning').style.display = 'block';
-            
-            // Simulamos un proceso de fine tuning con un timeout
-            setTimeout(() => {
-                document.getElementById('loading-fine-tuning').style.display = 'none';
-                alert("Fine tuning completado exitosamente. El modelo ajustado ha sido guardado.");
-            }, 3000);
+            document.getElementById('avance-fine-tuning').style.display = 'block';
+            document.getElementById('pasos-entrenamiento').textContent = '0';
+
+            let pasos = 0;
+            const totalPasos = 100; // Puedes ajustar este número según el número de épocas o tamaño del dataset
+            const intervalo = setInterval(() => {
+                pasos++;
+                document.getElementById('pasos-entrenamiento').textContent = pasos;
+
+                if (pasos >= totalPasos) {
+                    clearInterval(intervalo);
+                    document.getElementById('loading-fine-tuning').style.display = 'none';
+                    alert("Fine tuning completado exitosamente. El modelo ajustado ha sido guardado.");
+                }
+            }, 100); // milisegundos entre pasos
         }
+
+
+        // Simulamos un proceso de fine tuning con un timeout
+        setTimeout(() => {
+            document.getElementById('loading-fine-tuning').style.display = 'none';
+            alert("Fine tuning completado exitosamente. El modelo ajustado ha sido guardado.");
+        }, 3000);
+        
     </script>
 </body>
+
 </html>
