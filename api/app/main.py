@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import pandas as pd
 import io
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
+import requests
 
 app = FastAPI()
 
@@ -32,7 +33,7 @@ async def evaluate_model(
     col_clasificacion: str = None
 ) -> Dict[str, Any]:
     """
-    Endpoint para evaluar modelos de ML con métricas reales.
+    Endpoint para evaluar modelos de ML con métricas reales y consultar etiquetas desde la API del INEGI.
     """
     try:
         if not csv_file.filename.lower().endswith('.csv'):
@@ -53,25 +54,43 @@ async def evaluate_model(
                 detail=f"Columnas '{col_texto}' o '{col_clasificacion}' no encontradas en el CSV"
             )
 
-        # Función interna para extraer y_true y y_pred
+
         def obtener_valores_y(df: pd.DataFrame, col_clasificacion: str, col_texto: str):
-            y_true = df[col_clasificacion].astype(str)
-            y_pred = y_true
+            y_true = df[col_clasificacion].astype(str).tolist()
+                
+            #  Llamar a la API de INEGI 
+            try:
+                textos = df[col_texto].astype(str).tolist()
+                payload = {"data": textos}
+                url_inegi = "http://lcidbind.inegi.gob.mx:5194/api/codificacion/enigh/t1/sinco"
+                respuesta = requests.post(url_inegi, json=payload)
+                respuesta.raise_for_status()
+                resultado_inegi = respuesta.json()
+
+                codificaciones = []
+                for etiquetas in resultado_inegi.get("tags", []):
+                    if etiquetas:
+                        e = etiquetas[0]
+                        #codificaciones.append({"codigo": e[0], "score": e[1]})
+                        codificaciones.append(e)
+
+            except requests.exceptions.RequestException as e:
+                codificaciones = []
+                resultado_inegi = {"errors": [f"Error al conectar con INEGI: {str(e)}"]}
+            y_pred = codificaciones  # Placeholder, aquí puedes poner tu modelo real
             return y_true, y_pred
 
-        # Obtener y_true y y_pred
         y_true, y_pred = obtener_valores_y(df, col_clasificacion, col_texto)
 
-
-        # Calcular métricas (modo multiclase)
+        print(y_true)
+        print(y_pred)
         accuracy = accuracy_score(y_true, y_pred)
         precision = precision_score(y_true, y_pred, average='macro', zero_division=0)
         recall = recall_score(y_true, y_pred, average='macro', zero_division=0)
         f1 = f1_score(y_true, y_pred, average='macro', zero_division=0)
         cm = confusion_matrix(y_true, y_pred).tolist()
 
-        # Estructura de salida
-        metrics = {
+        return {
             "model": model_name,
             "metrics": {
                 "accuracy": accuracy,
@@ -83,10 +102,10 @@ async def evaluate_model(
             "dataset_stats": {
                 "samples": len(df),
                 "features": len(df.columns) - 1
-            }
+            },
+            #"codificaciones_inegi": codificaciones,
+            #"advertencias_inegi": resultado_inegi.get("errors", [])
         }
-
-        return metrics
 
     except pd.errors.EmptyDataError:
         raise HTTPException(status_code=400, detail="El archivo CSV está vacío")
@@ -96,3 +115,7 @@ async def evaluate_model(
         raise e
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al procesar el archivo: {str(e)}")
+
+    
+
+    
