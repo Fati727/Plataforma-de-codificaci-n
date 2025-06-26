@@ -275,8 +275,18 @@
         </div>
 
         <div class="form-group">
-            <label for="archivo-fine-tuning">Suba su archivo CSV para ajuste:</label>
+            <label for="archivo-fine-tuning">Sube tu archivo CSV para ajuste:</label>
             <input type="file" id="archivo-fine-tuning" accept=".csv">
+        </div>
+
+        <div class="form-group">
+            <label for="columnDropdown">Selecciona una columna de texto:</label>
+            <select id="columnDropdown"></select>
+        </div>
+
+        <div class="form-group">
+            <label for="columnClassDropdown">Selecciona la columna de clasificación:</label>
+            <select id="columnClassDropdown"></select>
         </div>
 
         <div class="form-group">
@@ -288,14 +298,16 @@
             </select>
         </div>
 
-        <button onclick="ejecutarFineTuning()">Iniciar Fine Tuning</button>
+        <button type="button" onclick="iniciarFineTuning()">Iniciar Fine Tuning</button>
 
-        <div id="loading-fine-tuning" class="loading">
+        <!-- Indicador de carga -->
+        <div id="loading-fine-tuning" class="loading" style="display:none;">
             <div class="spinner"></div>
             <p>Realizando fine tuning, esto puede tomar varios minutos...</p>
         </div>
 
-        <div id="avance-fine-tuning" class="avance">
+        <!-- Barra de progreso -->
+        <div id="avance-fine-tuning" class="avance" style="display:none;">
             <p><strong>Pasos de entrenamiento:</strong> <span id="pasos-entrenamiento">0</span></p>
         </div>
     </div>
@@ -398,6 +410,7 @@
 
                 const data = await response.json();
                 mostrarResultadosEvaluacion(data);
+
 
             } catch (error) {
                 console.error('Error completo:', error);
@@ -608,27 +621,67 @@
 
             doc.save('reporte_modelo.pdf');
         }
+    // Función para iniciar el proceso real de Fine Tuning
+    async function iniciarFineTuning() {
+        const archivo = document.getElementById('archivo-fine-tuning').files[0];
+        const modeloBase = document.getElementById('modelo-base').value;
+        const epocas = document.getElementById('epocas').value;
 
-        // Función para fine tuning (simulada)
-        function ejecutarFineTuning() {
+        if (!archivo) {
+            alert('Por favor selecciona un archivo CSV');
+            return;
+        }
+
+        // Crear el FormData
+        const formData = new FormData();
+        formData.append("file", archivo); 
+        formData.append("modelo", modeloBase); 
+        formData.append("epocas", epocas);     
+
+        try {
+            // Mostrar el estado de carga antes de enviar
             document.getElementById('loading-fine-tuning').style.display = 'block';
             document.getElementById('avance-fine-tuning').style.display = 'block';
-            document.getElementById('pasos-entrenamiento').textContent = '0';
 
-            let pasos = 0;
-            const totalPasos = 100; // Puedes ajustar este número según el número de épocas o tamaño del dataset
-            const intervalo = setInterval(() => {
-                pasos++;
-                document.getElementById('pasos-entrenamiento').textContent = pasos;
+            // Enviar al backend
+            const response = await fetch("http://localhost:8000/fine-tuning/", {
+                method: "POST",
+                body: formData
+            });
 
-                if (pasos >= totalPasos) {
-                    clearInterval(intervalo);
-                    document.getElementById('loading-fine-tuning').style.display = 'none';
-                    alert("Fine tuning completado exitosamente. El modelo ajustado ha sido guardado.");
-                }
-            }, 100); // milisegundos entre pasos
+            const resultado = await response.json();
+
+            if (resultado.status === "ok") {
+                // Iniciar simulación de entrenamiento
+                ejecutarFineTuning();
+            } else {
+                throw new Error("El servidor no respondió 'ok'");
+            }
+
+        } catch (error) {
+            console.error("Error:", error);
+            alert("Ocurrió un error durante el fine tuning.");
+            document.getElementById('loading-fine-tuning').style.display = 'none';
+            document.getElementById('avance-fine-tuning').style.display = 'none';
         }
-        
+    }
+
+    // Simulación de pasos de entrenamiento
+    function ejecutarFineTuning() {
+        let pasos = 0;
+        const totalPasos = 100;
+        const intervalo = setInterval(() => {
+            pasos++;
+            document.getElementById('pasos-entrenamiento').textContent = pasos;
+
+            if (pasos >= totalPasos) {
+                clearInterval(intervalo);
+                document.getElementById('loading-fine-tuning').style.display = 'none';
+                alert("Fine tuning completado exitosamente.");
+            }
+        }, 100);
+    }
+
     </script>
 </body>
 

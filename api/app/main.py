@@ -1,5 +1,5 @@
 from typing import Union, Dict, Any
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, UploadFile, File, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 import pandas as pd
 import io
@@ -24,6 +24,15 @@ def read_root():
 @app.get("/items/{item_id}")
 def read_item(item_id: int, q: Union[str, None] = None):
     return {"item_id": item_id, "q": q}
+
+@app.post("/fine-tuning/")
+async def fine_tuning(file: UploadFile = File(...)) -> Dict[str, str]:
+    """
+    Endpoint de Fine Tuning.
+    Recibe un archivo y responde con 'ok'.
+    """
+    return {"status": "ok"}
+
 
 @app.post("/evaluate-model/")
 async def evaluate_model(
