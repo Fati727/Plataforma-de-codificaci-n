@@ -387,6 +387,9 @@
             const inputColumn = document.getElementById('columnDropdown').value;
             const classColumn = document.getElementById('columnClassDropdown').value;
 
+            // Iniciar cronómetro
+            const inicio = performance.now(); // Capturar el tiempo de inicio
+
             document.getElementById('loading-evaluacion').style.display = 'block';
 
             try {
@@ -409,8 +412,7 @@
                 }
 
                 const data = await response.json();
-                mostrarResultadosEvaluacion(data);
-
+                mostrarResultadosEvaluacion(data, inicio); // Pasar el tiempo de inicio
 
             } catch (error) {
                 console.error('Error completo:', error);
@@ -421,45 +423,33 @@
         }
 
         // Mostrar métricas y matriz de confusión
-        function mostrarResultadosEvaluacion(data) {
+        function mostrarResultadosEvaluacion(data, inicio) {
             const m = data.metrics;
             const resultadosDiv = document.getElementById('resultados-evaluacion');
             resultadosDiv.style.display = 'block';
 
-            resultadosDiv.innerHTML = `
-            <h3>Resultados de Evaluación del Modelo: ${data.model}</h3>
-            <div class="metrics">
-                <div class="metric-card"><div class="metric-value">${m.accuracy}</div><div>Exactitud</div></div>
-                <div class="metric-card"><div class="metric-value">${m.precision}</div><div>Precisión</div></div>
-                <div class="metric-card"><div class="metric-value">${m.recall}</div><div>Recall</div></div>
-                <div class="metric-card"><div class="metric-value">${m.f1_score}</div><div>F1-Score</div></div>
-            </div>
+            resultadosDiv.innerHTML = ` 
+        <h3>Resultados de Evaluación del Modelo: ${data.model}</h3>
+        <div class="metrics">
+            <div class="metric-card"><div class="metric-value">${m.accuracy}</div><div>Exactitud</div></div>
+            <div class="metric-card"><div class="metric-value">${m.precision}</div><div>Precisión</div></div>
+            <div class="metric-card"><div class="metric-value">${m.recall}</div><div>Recall</div></div>
+            <div class="metric-card"><div class="metric-value">${m.f1_score}</div><div>F1-Score</div></div>
+        </div>
 
-            <div class="radar-container">
-                <canvas id="radarChart"></canvas>
-            </div>
-            <h4>Matriz de Confusión</h4>
-            <table>
-                <tr>
-                    <th></th>
-                    <th>Predicho Positivo</th>
-                    <th>Predicho Negativo</th>
-                </tr>
-                <tr>
-                    <th>Real Positivo</th>
-                    <td>${m.confusion_matrix.true_positives}</td>
-                    <td>${m.confusion_matrix.false_negatives}</td>
-                </tr>
-                <tr>
-                    <th>Real Negativo</th>
-                    <td>${m.confusion_matrix.false_positives}</td>
-                    <td>${m.confusion_matrix.true_negatives}</td>
-                </tr>
-            </table>
-            <div class="download-btn-container">
-                <button onclick="descargarResultados()">Descargar Reporte Completo</button>
-            </div>
-        `;
+        <div class="radar-container">
+            <canvas id="radarChart"></canvas>
+        </div>
+
+            <div id="resultados-tiempo" style="margin-top: 20px; display: none;">
+        <p id="tiempo-total" style="font-weight: bold;"></p>
+        <p id="tiempo-promedio" style="font-weight: bold;"></p>
+    </div>
+       
+        <div class="download-btn-container">
+            <button onclick="descargarResultados()">Descargar Reporte Completo</button>
+        </div>
+    `;
 
             // gráfico de radar 
             setTimeout(() => {
@@ -516,8 +506,21 @@
                     document.getElementById('radarChart'),
                     radarConfig
                 );
+
+                // Calcular y mostrar el tiempo
+                const fin = performance.now(); // Capturar el tiempo de fin
+                const tiempoTotalSegundos = (fin - inicio) / 1000; // Convertir de ms a segundos
+                const tiempoPromedio = tiempoTotalSegundos / 1;
+
+                document.getElementById('tiempo-total').textContent = ` Tiempo total: ${tiempoTotalSegundos.toFixed(2)} segundos`;
+                document.getElementById('tiempo-promedio').textContent = `Tiempo promedio por registro: ${tiempoPromedio.toFixed(4)} segundos`;
+
+                // Mostrar los resultados de tiempo después de la gráfica
+                document.getElementById('resultados-tiempo').style.display = 'block';
+
             }, 100);
         }
+
 
         // Descarga de resultados 
         async function descargarResultados() {
@@ -621,66 +624,66 @@
 
             doc.save('reporte_modelo.pdf');
         }
-    // Función para iniciar el proceso real de Fine Tuning
-    async function iniciarFineTuning() {
-        const archivo = document.getElementById('archivo-fine-tuning').files[0];
-        const modeloBase = document.getElementById('modelo-base').value;
-        const epocas = document.getElementById('epocas').value;
+        // Función para iniciar el proceso real de Fine Tuning
+        async function iniciarFineTuning() {
+            const archivo = document.getElementById('archivo-fine-tuning').files[0];
+            const modeloBase = document.getElementById('modelo-base').value;
+            const epocas = document.getElementById('epocas').value;
 
-        if (!archivo) {
-            alert('Por favor selecciona un archivo CSV');
-            return;
-        }
-
-        // Crear el FormData
-        const formData = new FormData();
-        formData.append("file", archivo); 
-        formData.append("modelo", modeloBase); 
-        formData.append("epocas", epocas);     
-
-        try {
-            // Mostrar el estado de carga antes de enviar
-            document.getElementById('loading-fine-tuning').style.display = 'block';
-            document.getElementById('avance-fine-tuning').style.display = 'block';
-
-            // Enviar al backend
-            const response = await fetch("http://localhost:8000/fine-tuning/", {
-                method: "POST",
-                body: formData
-            });
-
-            const resultado = await response.json();
-
-            if (resultado.status === "ok") {
-                // Iniciar simulación de entrenamiento
-                ejecutarFineTuning();
-            } else {
-                throw new Error("El servidor no respondió 'ok'");
+            if (!archivo) {
+                alert('Por favor selecciona un archivo CSV');
+                return;
             }
 
-        } catch (error) {
-            console.error("Error:", error);
-            alert("Ocurrió un error durante el fine tuning.");
-            document.getElementById('loading-fine-tuning').style.display = 'none';
-            document.getElementById('avance-fine-tuning').style.display = 'none';
-        }
-    }
+            // Crear el FormData
+            const formData = new FormData();
+            formData.append("file", archivo);
+            formData.append("modelo", modeloBase);
+            formData.append("epocas", epocas);
 
-    // Simulación de pasos de entrenamiento
-    function ejecutarFineTuning() {
-        let pasos = 0;
-        const totalPasos = 100;
-        const intervalo = setInterval(() => {
-            pasos++;
-            document.getElementById('pasos-entrenamiento').textContent = pasos;
+            try {
+                // Mostrar el estado de carga antes de enviar
+                document.getElementById('loading-fine-tuning').style.display = 'block';
+                document.getElementById('avance-fine-tuning').style.display = 'block';
 
-            if (pasos >= totalPasos) {
-                clearInterval(intervalo);
+                // Enviar al backend
+                const response = await fetch("http://localhost:8000/fine-tuning/", {
+                    method: "POST",
+                    body: formData
+                });
+
+                const resultado = await response.json();
+
+                if (resultado.status === "ok") {
+                    // Iniciar simulación de entrenamiento
+                    ejecutarFineTuning();
+                } else {
+                    throw new Error("El servidor no respondió 'ok'");
+                }
+
+            } catch (error) {
+                console.error("Error:", error);
+                alert("Ocurrió un error durante el fine tuning.");
                 document.getElementById('loading-fine-tuning').style.display = 'none';
-                alert("Fine tuning completado exitosamente.");
+                document.getElementById('avance-fine-tuning').style.display = 'none';
             }
-        }, 100);
-    }
+        }
+
+        // Simulación de pasos de entrenamiento
+        function ejecutarFineTuning() {
+            let pasos = 0;
+            const totalPasos = 100;
+            const intervalo = setInterval(() => {
+                pasos++;
+                document.getElementById('pasos-entrenamiento').textContent = pasos;
+
+                if (pasos >= totalPasos) {
+                    clearInterval(intervalo);
+                    document.getElementById('loading-fine-tuning').style.display = 'none';
+                    alert("Fine tuning completado exitosamente.");
+                }
+            }, 100);
+        }
 
     </script>
 </body>
