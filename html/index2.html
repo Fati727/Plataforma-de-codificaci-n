@@ -378,7 +378,7 @@
         async function evaluarModelo() {
             const modelName = document.getElementById('modelo-evaluacion').value;
             const csvFile = document.getElementById('archivo-evaluacion').files[0];
-
+            
             if (!csvFile) {
                 alert('Por favor selecciona un archivo CSV');
                 return;
@@ -520,6 +520,35 @@
 
             }, 100);
         }
+        async function cargarModelosDisponibles() {
+    const selectModelo = document.getElementById('modelo-evaluacion');
+
+    try {
+        const response = await fetch('http://localhost:8000/modelos-disponibles/');
+        if (!response.ok) {
+            throw new Error(`Error al obtener modelos: ${response.statusText}`);
+        }
+
+        const modelos = await response.json();
+
+        selectModelo.innerHTML = '<option disabled selected>Selecciona un modelo</option>';
+
+        modelos.forEach(modelo => {
+            const option = document.createElement('option');
+            option.value = modelo.nombre;
+            option.textContent = `${modelo.nombre} (ID: ${modelo.id})`;
+            selectModelo.appendChild(option);
+        });
+    } catch (error) {
+        console.error('Error cargando modelos:', error);
+        alert('No se pudieron cargar los modelos disponibles.');
+    }
+}
+
+// Llamar automáticamente al cargar la página
+document.addEventListener('DOMContentLoaded', () => {
+    cargarModelosDisponibles();
+});
 
 
         // Descarga de resultados 

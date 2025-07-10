@@ -1,6 +1,7 @@
-from typing import Union, Dict, Any
-from fastapi import FastAPI, UploadFile, File, HTTPException, Request
+from typing import Union, Dict, Any, List
+from fastapi import FastAPI, UploadFile, File, HTTPException, Form
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 import pandas as pd
 import io
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
@@ -17,6 +18,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ----------------------------- ENDPOINTS BÁSICOS ----------------------------------
+
 @app.get("/")
 def read_root():
     return {"Hello": "World"}
@@ -24,6 +27,28 @@ def read_root():
 @app.get("/items/{item_id}")
 def read_item(item_id: int, q: Union[str, None] = None):
     return {"item_id": item_id, "q": q}
+
+# --------------------------- ENDPOINT DE SELECCIÓN DE MODELO ----------------------
+
+class Modelo(BaseModel):
+    nombre: str
+    id: int
+
+# Lista de modelos disponibles
+modelos_disponibles = [
+    {"id": 1, "nombre": "BERT"},
+    {"id": 2, "nombre": "RoBERTa"},
+    {"id": 3, "nombre": "DistilBERT"}
+]
+
+# Endpoint para obtener modelos disponibles
+@app.get("/modelos-disponibles/", response_model=List[Modelo])
+async def obtener_modelos_disponibles():
+    # Creamos la respuesta en el formato que quieres
+    modelos = [{"nombre": modelo["nombre"], "id": modelo["id"]} for modelo in modelos_disponibles]
+    return modelos
+
+# -------------------------- ENDPOINT DE FINE TUNING  -----------------
 
 @app.post("/fine-tuning/")
 async def fine_tuning(file: UploadFile = File(...)) -> Dict[str, str]:
@@ -33,13 +58,14 @@ async def fine_tuning(file: UploadFile = File(...)) -> Dict[str, str]:
     """
     return {"status": "ok"}
 
+# ------------------------- ENDPOINT DE EVALUACIÓN DE MODELOS ----------------------
 
 @app.post("/evaluate-model/")
 async def evaluate_model(
-    model_name: str,
+    model_name: str = Form(...),
     csv_file: UploadFile = File(...),
-    col_texto: str = None,
-    col_clasificacion: str = None
+    col_texto: str = Form(None),
+    col_clasificacion: str = Form(None)
 ) -> Dict[str, Any]:
     """
     Endpoint para evaluar modelos de ML con métricas reales y consultar etiquetas desde la API del INEGI.
@@ -63,11 +89,9 @@ async def evaluate_model(
                 detail=f"Columnas '{col_texto}' o '{col_clasificacion}' no encontradas en el CSV"
             )
 
-
         def obtener_valores_y(df: pd.DataFrame, col_clasificacion: str, col_texto: str):
             y_true = df[col_clasificacion].astype(str).tolist()
-                
-            #  Llamar a la API de INEGI 
+
             try:
                 textos = df[col_texto].astype(str).tolist()
                 payload = {"data": textos}
@@ -80,19 +104,18 @@ async def evaluate_model(
                 for etiquetas in resultado_inegi.get("tags", []):
                     if etiquetas:
                         e = etiquetas[0]
-                        #codificaciones.append({"codigo": e[0], "score": e[1]})
-                        codificaciones.append(e)
+                        codificaciones.append(e[0])  # Solo el código
 
             except requests.exceptions.RequestException as e:
                 codificaciones = []
                 resultado_inegi = {"errors": [f"Error al conectar con INEGI: {str(e)}"]}
-            y_pred = codificaciones  # Placeholder, aquí puedes poner tu modelo real
+
+            y_pred = codificaciones
             return y_true, y_pred
 
         y_true, y_pred = obtener_valores_y(df, col_clasificacion, col_texto)
 
-        print(y_true)
-        print(y_pred)
+        # Evaluar métricas
         accuracy = accuracy_score(y_true, y_pred)
         precision = precision_score(y_true, y_pred, average='macro', zero_division=0)
         recall = recall_score(y_true, y_pred, average='macro', zero_division=0)
@@ -111,9 +134,7 @@ async def evaluate_model(
             "dataset_stats": {
                 "samples": len(df),
                 "features": len(df.columns) - 1
-            },
-            #"codificaciones_inegi": codificaciones,
-            #"advertencias_inegi": resultado_inegi.get("errors", [])
+            }
         }
 
     except pd.errors.EmptyDataError:
@@ -124,6 +145,7 @@ async def evaluate_model(
         raise e
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al procesar el archivo: {str(e)}")
+
 
     
 
