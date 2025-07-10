@@ -51,12 +51,26 @@ async def obtener_modelos_disponibles():
 # -------------------------- ENDPOINT DE FINE TUNING  -----------------
 
 @app.post("/fine-tuning/")
-async def fine_tuning(file: UploadFile = File(...)) -> Dict[str, str]:
+async def fine_tuning(
+    file: UploadFile = File(...),
+    columna_texto: str = Form(...),
+    columna_clase: str = Form(...)
+) -> Dict[str, str]:
     """
     Endpoint de Fine Tuning.
-    Recibe un archivo y responde con 'ok'.
+    Recibe un archivo y las columnas seleccionadas.
     """
-    return {"status": "ok"}
+    # Puedes hacer algo útil con el archivo y las columnas aquí, por ahora solo imprimimos
+    print(f"Archivo recibido: {file.filename}")
+    print(f"Columna de texto: {columna_texto}")
+    print(f"Columna de clasificación: {columna_clase}")
+
+    return {
+        "status": "ok",
+        "archivo": file.filename,
+        "columna_texto": columna_texto,
+        "columna_clase": columna_clase
+    }
 
 # ------------------------- ENDPOINT DE EVALUACIÓN DE MODELOS ----------------------
 
