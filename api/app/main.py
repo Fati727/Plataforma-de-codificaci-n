@@ -72,6 +72,35 @@ async def fine_tuning(
         "columna_clase": columna_clase
     }
 
+ 
+ # -------------------------- ENDPOINT DE ENTRENAMIENTO DESDE CERO  -----------------
+
+@app.post("/entrenamiento-desde-cero/")
+async def entrenamiento_desde_cero(
+    file: UploadFile = File(...),
+    columna_texto: str = Form(...),
+    columna_clase: str = Form(...)
+) -> Dict[str, str]:
+    """
+    Endpoint de Entrenamiento desde Cero.
+    Recibe un archivo y las columnas seleccionadas.
+    """
+    print(f"Archivo recibido: {file.filename}")
+    print(f"Columna de texto: {columna_texto}")
+    print(f"Columna de clasificación: {columna_clase}")
+
+    # Aquí podrías poner lógica de entrenamiento con scikit-learn, etc.
+
+    return {
+        "status": "ok",
+        "archivo": file.filename,
+        "columna_texto": columna_texto,
+        "columna_clase": columna_clase
+    }
+
+
+
+
 # ------------------------- ENDPOINT DE EVALUACIÓN DE MODELOS ----------------------
 
 @app.post("/evaluate-model/")

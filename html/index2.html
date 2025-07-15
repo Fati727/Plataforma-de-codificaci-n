@@ -837,6 +837,68 @@
             }
 
 
+            document.getElementById('archivo-entrenamiento').addEventListener('change', function (event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                Papa.parse(file, {
+                    header: true,
+                    skipEmptyLines: true,
+                    complete: function (results) {
+                        const columnas = Object.keys(results.data[0]);
+
+                        // Rellenar los dos selects
+                        const textoSelect = document.getElementById('columnDropdownEntrenamiento');
+                        const claseSelect = document.getElementById('columnClassDropdownEntrenamiento');
+
+                        textoSelect.innerHTML = '';
+                        claseSelect.innerHTML = '';
+
+                        columnas.forEach(col => {
+                            const textoOption = document.createElement('option');
+                            textoOption.value = col;
+                            textoOption.textContent = col;
+                            textoSelect.appendChild(textoOption);
+
+                            const claseOption = document.createElement('option');
+                            claseOption.value = col;
+                            claseOption.textContent = col;
+                            claseSelect.appendChild(claseOption);
+                        });
+                    }
+                });
+            });
+
+            async function iniciarEntrenamientoDesdeCero() {
+                const archivo = document.getElementById('archivo-entrenamiento').files[0];
+                const columnaTexto = document.getElementById('columnDropdownEntrenamiento').value;
+                const columnaClase = document.getElementById('columnClassDropdownEntrenamiento').value;
+
+                if (!archivo || !columnaTexto || !columnaClase) {
+                    alert("Selecciona el archivo, la columna de texto y la de clasificación.");
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append("archivo", archivo);
+                formData.append("columna_texto", columnaTexto);
+                formData.append("columna_clase", columnaClase);
+
+                try {
+                    const response = await fetch("http://localhost:8000/entrenamiento-desde-cero/", {
+                        method: "POST",
+                        body: formData
+                    });
+
+                    const resultado = await response.json();
+                    alert("Entrenamiento: " + resultado.mensaje);
+                } catch (error) {
+                    console.error("Error:", error);
+                    alert("Ocurrió un error durante el entrenamiento.");
+                }
+            }
+
+
 
         </script>
 </body>
