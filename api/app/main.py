@@ -41,7 +41,7 @@ modelos_disponibles = [
     {"id": 3, "nombre": "DistilBERT"}
 ]
 
-@router.get("/api/v1/modelos-disponibles/", response_model=List[Modelo])
+@router.get("/modelos-disponibles/", response_model=List[Modelo])
 async def obtener_modelos_disponibles():
     modelos = [{"nombre": modelo["nombre"], "id": modelo["id"]} for modelo in modelos_disponibles]
     return modelos
