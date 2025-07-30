@@ -118,7 +118,7 @@ async def evaluate_model(
             try:
                 textos = df[col_texto].astype(str).tolist()
                 payload = {"data": textos}
-                url_inegi = "http://lcidbind.inegi.gob.mx:5194/api/codificacion/enigh/t1/sinco"
+                url_inegi = "http://lcidbind.inegi.gob.mx:5194/api/codificacion/enigh/t1/scian"
                 respuesta = requests.post(url_inegi, json=payload)
                 respuesta.raise_for_status()
                 resultado_inegi = respuesta.json()
@@ -126,8 +126,7 @@ async def evaluate_model(
                 codificaciones = []
                 for etiquetas in resultado_inegi.get("tags", []):
                     if etiquetas:
-                        e = etiquetas[0]
-                        codificaciones.append(e[0])  # Solo el código
+                        codificaciones.append(etiquetas[0])  # Solo el código
             except requests.exceptions.RequestException as e:
                 codificaciones = []
                 resultado_inegi = {"errors": [f"Error al conectar con INEGI: {str(e)}"]}
