@@ -529,7 +529,12 @@
                         labels: ['Exactitud', 'Precisión', 'Recall', 'F1-score'],
                         datasets: [{
                             label: 'Métricas del modelo',
-                            data: [m.accuracy, m.precision, m.recall, m.f1_score],
+                            data: [
+                                parseFloat(m.accuracy.toFixed(4)),
+                                parseFloat(m.precision.toFixed(4)),
+                                parseFloat(m.recall.toFixed(4)),
+                                parseFloat(m.f1_score.toFixed(4))
+                            ],
                             fill: true,
                             backgroundColor: 'rgba(54, 162, 235, 0.2)',
                             borderColor: 'rgb(54, 162, 235)',
