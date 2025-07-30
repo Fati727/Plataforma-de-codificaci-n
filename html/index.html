@@ -502,12 +502,12 @@
 
                 resultadosDiv.innerHTML = ` 
         <h3>Resultados de Evaluación del Modelo: ${data.model}</h3>
-        <div class="metrics">
-            <div class="metric-card"><div class="metric-value">${m.accuracy}</div><div>Exactitud</div></div>
-            <div class="metric-card"><div class="metric-value">${m.precision}</div><div>Precisión</div></div>
-            <div class="metric-card"><div class="metric-value">${m.recall}</div><div>Recall</div></div>
-            <div class="metric-card"><div class="metric-value">${m.f1_score}</div><div>F1-Score</div></div>
-        </div>
+              <div class="metrics">
+            <div class="metric-card"><div class="metric-value">${m.accuracy.toFixed(4)}</div><div>Exactitud</div></div>
+            <div class="metric-card"><div class="metric-value">${m.precision.toFixed(4)}</div><div>Precisión</div></div>
+            <div class="metric-card"><div class="metric-value">${m.recall.toFixed(4)}</div><div>Recall</div></div>
+            <div class="metric-card"><div class="metric-value">${m.f1_score.toFixed(4)}</div><div>F1-Score</div></div>
+        </div> 
 
         <div class="radar-container">
             <canvas id="radarChart"></canvas>
