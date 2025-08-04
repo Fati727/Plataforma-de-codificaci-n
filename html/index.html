@@ -4,16 +4,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Plataforma LLM - INEGI</title>
+    <title>Plataforma LLM - INEGI</title> <!-- Título de la pestaña del navegador -->
+
     <style>
-        /* Estilos generales */
+        /* Estilos generales del cuerpo de la página */
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
+            /* Fuente predeterminada */
             line-height: 1.6;
+            /* Altura entre líneas */
             color: #333;
+            /* Color de texto */
             margin: 0;
+            /* Elimina márgenes del navegador */
             padding: 20px;
+            /* Espaciado interior general */
             background-color: #f5f7fa;
+            /* Color de fondo */
             max-width: none;
             width: 100%;
             box-sizing: border-box;
@@ -22,30 +29,38 @@
         h1,
         h2 {
             color: #2c3e50;
+            /* Color de los encabezados */
         }
 
-        /* Tarjetas de opciones */
+        /* Estilos para los contenedores de las tarjetas principales */
         .card-container {
             display: flex;
             gap: 20px;
+            /* Espacio entre tarjetas */
             margin-top: 30px;
             flex-wrap: wrap;
+            /* Permite que las tarjetas salten a otra línea si no caben */
         }
 
         .card {
             background: white;
             border-radius: 8px;
+            /* Bordes redondeados */
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            /* Sombra suave */
             padding: 25px;
             width: 300px;
             transition: transform 0.3s ease;
             cursor: pointer;
             border-left: 4px solid #3498db;
+            /* Línea decorativa izquierda */
         }
 
         .card:hover {
             transform: translateY(-5px);
+            /* Efecto de elevación al pasar el cursor */
             box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+            /* Sombra más intensa */
         }
 
         .card h2 {
@@ -54,7 +69,7 @@
             color: #3498db;
         }
 
-        /* Formularios */
+        /* Estilos para los formularios que se muestran al seleccionar una opción */
         .form-container {
             background: white;
             border-radius: 8px;
@@ -62,12 +77,14 @@
             padding: 25px;
             margin-top: 30px;
             display: none;
+            /* Oculto por defecto */
             width: 100%;
             box-sizing: border-box;
         }
 
         .form-group {
             margin-bottom: 20px;
+            /* Espaciado entre campos */
         }
 
         label {
@@ -76,6 +93,7 @@
             font-weight: 600;
         }
 
+        /* Estilo de selectores y campos para subir archivos */
         select,
         input[type="file"] {
             width: 100%;
@@ -85,6 +103,7 @@
             font-size: 16px;
         }
 
+        /* Estilo de los botones */
         button {
             background-color: #3498db;
             color: white;
@@ -100,7 +119,7 @@
             background-color: #2980b9;
         }
 
-        /* Resultados */
+        /* Contenedor para mostrar resultados después de enviar datos */
         .results {
             margin-top: 30px;
             background: white;
@@ -108,8 +127,10 @@
             border-radius: 8px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             display: none;
+            /* Oculto inicialmente */
         }
 
+        /* Estilos para las métricas mostradas */
         .metrics {
             display: flex;
             gap: 20px;
@@ -132,12 +153,14 @@
             color: #2c3e50;
         }
 
+        /* Contenedor de carga mientras se procesa */
         .loading {
             display: none;
             margin: 20px 0;
             text-align: center;
         }
 
+        /* Animación de carga tipo spinner */
         .spinner {
             border: 4px solid rgba(0, 0, 0, 0.1);
             width: 36px;
@@ -158,7 +181,7 @@
             }
         }
 
-        /* Tabla de resultados */
+        /* Estilos para la tabla de resultados */
         table {
             width: 100%;
             border-collapse: collapse;
@@ -182,7 +205,7 @@
             background-color: #f1f1f1;
         }
 
-        /* Estilo para el botón de descarga */
+        /* Estilo para el contenedor del botón de descarga */
         .download-btn-container {
             display: flex;
             justify-content: center;
@@ -200,6 +223,7 @@
             max-width: 500px;
         }
 
+        /* Estilo para mostrar avance o estado del procesamiento */
         .avance {
             margin-top: 15px;
             font-size: 16px;
@@ -211,30 +235,37 @@
 </head>
 
 <body>
+    <!-- Encabezado principal de la página -->
     <header>
         <h1>Plataforma de Adopción de LLMs</h1>
         <p>Seleccione una herramienta para comenzar</p>
     </header>
 
+    <!-- Contenedor de tarjetas para seleccionar una opción -->
     <div class="card-container">
+        <!-- Tarjeta: Evaluación de modelos -->
         <div class="card" onclick="showForm('evaluacion')">
             <h2>Evaluación de Modelos</h2>
             <p>Pruebe modelos pre-entrenados con sus datos y obtenga métricas de desempeño.</p>
         </div>
 
+        <!-- Tarjeta: Fine Tuning -->
         <div class="card" onclick="showForm('fine-tuning')">
             <h2>Fine Tuning</h2>
             <p>Ajuste modelos pre-entrenados con sus datos específicos.</p>
         </div>
 
+        <!-- Tarjeta: Entrenamiento desde cero -->
         <div class="card" onclick="showForm('entrenamiento')">
             <h2>Entrenamiento desde Cero</h2>
             <p>Entrene un nuevo modelo con su arquitectura y datos personalizados.</p>
         </div>
 
+        <!-- =================== FORMULARIO DE EVALUACIÓN =================== -->
         <div id="evaluacion-form" class="form-container">
             <h2>Evaluación de Modelos</h2>
 
+            <!-- Selección del modelo preentrenado -->
             <div class="form-group">
                 <label for="modelo-evaluacion">Seleccione un modelo:</label>
                 <select id="modelo-evaluacion">
@@ -244,31 +275,39 @@
                 </select>
             </div>
 
+            <!-- Carga del archivo CSV -->
             <div class="form-group">
                 <label for="archivo-evaluacion">Suba su archivo CSV:</label>
                 <input type="file" id="archivo-evaluacion" accept=".csv">
             </div>
 
+            <!-- Selección de la columna de texto -->
             <div class="form-group">
                 <label for="columnDropdown">Seleccione una columna de texto:</label>
                 <select id="columnDropdown"></select>
             </div>
+
+            <!-- Selección de la columna de clasificación -->
             <div class="form-group">
                 <label for="columnClassDropdown">Selecciona la columna de clasificación:</label>
                 <select id="columnClassDropdown"></select>
             </div>
 
+            <!-- Botón para ejecutar la evaluación -->
             <button onclick="evaluarModelo()">Ejecutar Evaluación</button>
 
+            <!-- Indicador de carga mientras se ejecuta la evaluación -->
             <div id="loading-evaluacion" class="loading">
                 <div class="spinner"></div>
                 <p>Procesando evaluación, por favor espere...</p>
             </div>
         </div>
 
+        <!-- =================== FORMULARIO DE FINE TUNING =================== -->
         <div id="fine-tuning-form" class="form-container" style="display: none;">
             <h2>Fine Tuning</h2>
 
+            <!-- Selección del modelo base -->
             <div class="form-group">
                 <label for="modelo-base">Modelo base:</label>
                 <select id="modelo-base">
@@ -278,21 +317,25 @@
                 </select>
             </div>
 
+            <!-- Carga del archivo CSV para entrenamiento -->
             <div class="form-group">
                 <label for="archivo-finetuning">Sube tu archivo CSV para ajuste:</label>
                 <input type="file" id="archivo-finetuning" accept=".csv">
             </div>
 
+            <!-- Selección de la columna de texto -->
             <div class="form-group">
                 <label for="columnDropdownFineTuning">Selecciona una columna de texto:</label>
                 <select id="columnDropdownFineTuning"></select>
             </div>
 
+            <!-- Selección de la columna de clasificación -->
             <div class="form-group">
                 <label for="columnClassDropdownFineTuning">Selecciona la columna de clasificación:</label>
                 <select id="columnClassDropdownFineTuning"></select>
             </div>
 
+            <!-- Número de épocas para el entrenamiento -->
             <div class="form-group">
                 <label for="epocas">Número de épocas:</label>
                 <select id="epocas">
@@ -302,29 +345,33 @@
                 </select>
             </div>
 
+            <!-- Tasa de aprendizaje -->
             <div class="form-group">
                 <label for="tasa-aprendizaje">Tasa de Aprendizaje:</label>
-                <input type="number" id="tasa-aprendizaje" class="form-control" min="0.0001" max="0.1" step="0.0001"
+                <input type="number" id="tasa-aprendizaje-finetuning" class="form-control" min="0.0001" max="0.1" step="0.0001"
                     value="0.001">
             </div>
 
+            <!-- Botón para iniciar fine tuning -->
             <button type="button" onclick="iniciarFineTuning()">Iniciar Fine Tuning</button>
 
-            <!-- Indicador de carga -->
+            <!-- Spinner mientras se entrena el modelo -->
             <div id="loading-finetuning" class="loading" style="display:none;">
                 <div class="spinner"></div>
                 <p>Realizando fine tuning, esto puede tomar varios minutos...</p>
             </div>
 
-            <!-- Barra de progreso -->
+            <!-- Avance del entrenamiento (actualizado dinámicamente) -->
             <div id="avance-finetuning" class="avance" style="display:none;">
                 <p><strong>Pasos de entrenamiento:</strong> <span id="pasos-entrenamiento">0</span></p>
             </div>
         </div>
 
+        <!-- =================== FORMULARIO DE ENTRENAMIENTO DESDE CERO =================== -->
         <div id="entrenamiento-cero-form" class="form-container" style="display: none;">
             <h2>Entrenamiento desde Cero</h2>
 
+            <!-- Selección del modelo personalizado -->
             <div class="form-group">
                 <label for="modelo-entrenamiento">Modelo para Entrenamiento:</label>
                 <select id="modelo-entrenamiento">
@@ -334,21 +381,25 @@
                 </select>
             </div>
 
+            <!-- Subida de archivo para entrenamiento -->
             <div class="form-group">
                 <label for="archivo-entrenamiento">Sube tu archivo CSV para entrenamiento:</label>
                 <input type="file" id="archivo-entrenamiento" accept=".csv">
             </div>
 
+            <!-- Columna de texto -->
             <div class="form-group">
                 <label for="columnDropdownEntrenamiento">Selecciona una columna de texto:</label>
                 <select id="columnDropdownEntrenamiento"></select>
             </div>
 
+            <!-- Columna de clasificación -->
             <div class="form-group">
                 <label for="columnClassDropdownEntrenamiento">Selecciona la columna de clasificación:</label>
                 <select id="columnClassDropdownEntrenamiento"></select>
             </div>
 
+            <!-- Selección de número de épocas -->
             <div class="form-group">
                 <label for="epocas-entrenamiento">Número de épocas:</label>
                 <select id="epocas-entrenamiento">
@@ -358,170 +409,186 @@
                 </select>
             </div>
 
+            <!-- Tasa de aprendizaje para entrenamiento desde cero -->
             <div class="form-group">
                 <label for="tasa-aprendizaje">Tasa de Aprendizaje:</label>
-                <input type="number" id="tasa-aprendizaje" class="form-control" min="0.0001" max="0.1" step="0.0001"
+                <input type="number" id="tasa-aprendizaje-entrenamiento" class="form-control" min="0.0001" max="0.1" step="0.0001"
                     value="0.001">
             </div>
 
+            <!-- Botón para ejecutar el entrenamiento -->
             <button type="button" onclick="iniciarEntrenamiento()">Iniciar Entrenamiento</button>
 
-            <!-- Indicador de carga -->
+            <!-- Spinner mientras se entrena el modelo -->
             <div id="loading-entrenamiento" class="loading" style="display:none;">
                 <div class="spinner"></div>
                 <p>Entrenando, esto puede tomar varios minutos...</p>
             </div>
 
-            <!-- Barra de progreso -->
+            <!-- Visualización del avance del entrenamiento -->
             <div id="avance-entrenamiento" class="avance" style="display:none;">
                 <p><strong>Pasos de entrenamiento:</strong> <span id="pasos-entrenamiento">0</span></p>
             </div>
         </div>
 
+        <!-- Contenedor para mostrar resultados de la evaluación -->
         <div id="resultados-evaluacion" class="results">
             <!-- Este contenido será reemplazado dinámicamente por JavaScript -->
         </div>
 
-        <!-- Carga de PapaParse para manejo de CSV -->
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
-        <!-- Carga de Chart.js para gráficos -->
-        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-        <script
-            src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+<!-- Librería PapaParse para leer archivos CSV en el navegador -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 
-        <script>
-            // Manejo del archivo CSV para extraer columnas y llenar los dropdowns
-            document.getElementById('archivo-evaluacion').addEventListener('change', function (e) {
-                const file = e.target.files[0];
-                if (!file) return;
+<!-- Librería Chart.js para generar gráficos como el de radar -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-                Papa.parse(file, {
-                    header: true,
-                    dynamicTyping: true,
-                    complete: function (results) {
-                        const columnNames = Object.keys(results.data[0] || {});
-                        llenarDropdown(columnNames);
-                    }
-                });
+<!-- jsPDF para generar archivos PDF desde el navegador -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<!-- Complemento de jsPDF para crear tablas dentro del PDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+
+<script>
+    // Evento para manejar la carga de un archivo CSV para la evaluación
+    document.getElementById('archivo-evaluacion').addEventListener('change', function (e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Parseo del archivo CSV usando PapaParse
+        Papa.parse(file, {
+            header: true,
+            dynamicTyping: true,
+            complete: function (results) {
+                const columnNames = Object.keys(results.data[0] || {});
+                llenarDropdown(columnNames); // Llenar los selectores de columnas
+            }
+        });
+    });
+
+    // Llena los selectores desplegables con los nombres de las columnas del CSV
+    function llenarDropdown(columnas) {
+        const inputDropdown = document.getElementById('columnDropdown');
+        const classDropdown = document.getElementById('columnClassDropdown');
+
+        inputDropdown.innerHTML = '';
+        classDropdown.innerHTML = '';
+
+        columnas.forEach(col => {
+            // Crear y añadir opción para la columna de entrada
+            const option1 = document.createElement('option');
+            option1.value = col;
+            option1.textContent = col;
+            inputDropdown.appendChild(option1);
+
+            // Crear y añadir opción para la columna de clasificación
+            const option2 = document.createElement('option');
+            option2.value = col;
+            option2.textContent = col;
+            classDropdown.appendChild(option2);
+        });
+    }
+
+    // Muestra el formulario correspondiente dependiendo de la opción seleccionada
+    function showForm(formType) {
+        // Oculta todos los formularios y resultados actuales
+        document.querySelectorAll('.form-container').forEach(form => form.style.display = 'none');
+        document.querySelectorAll('.results').forEach(result => result.style.display = 'none');
+
+        // Muestra solo el formulario seleccionado
+        if (formType === 'evaluacion') {
+            document.getElementById('evaluacion-form').style.display = 'block';
+        } else if (formType === 'fine-tuning') {
+            document.getElementById('fine-tuning-form').style.display = 'block';
+        } else if (formType === 'evaluar') {
+            document.getElementById('evaluar-modelo-form').style.display = 'block';
+        } else if (formType === 'entrenamiento') {
+            document.getElementById('entrenamiento-cero-form').style.display = 'block';
+        }
+    }
+
+    // Función para enviar archivo y opciones seleccionadas al backend para evaluación del modelo
+    async function evaluarModelo() {
+        const modelName = document.getElementById('modelo-evaluacion').value;
+        const csvFile = document.getElementById('archivo-evaluacion').files[0];
+
+        if (!csvFile) {
+            alert('Por favor selecciona un archivo CSV');
+            return;
+        }
+
+        const inputColumn = document.getElementById('columnDropdown').value;
+        const classColumn = document.getElementById('columnClassDropdown').value;
+
+        // Inicia cronómetro para medir tiempo de ejecución
+        const inicio = performance.now();
+
+        // Muestra spinner de carga
+        document.getElementById('loading-evaluacion').style.display = 'block';
+
+        try {
+            const formData = new FormData();
+            formData.append('model_name', modelName);
+            formData.append('csv_file', csvFile);
+            formData.append('input_column', inputColumn);
+            formData.append('class_column', classColumn);
+
+            // Enviar datos al backend usando fetch y método POST
+            const response = await fetch('/api/v1/evaluate-model/?model_name=' + modelName, {
+                method: 'POST',
+                credentials: 'include',
+                body: formData
             });
 
-            // Llena los dropdowns de columna de entrada y clasificación
-            function llenarDropdown(columnas) {
-                const inputDropdown = document.getElementById('columnDropdown');
-                const classDropdown = document.getElementById('columnClassDropdown');
-
-                inputDropdown.innerHTML = '';
-                classDropdown.innerHTML = '';
-
-                columnas.forEach(col => {
-                    const option1 = document.createElement('option');
-                    option1.value = col;
-                    option1.textContent = col;
-                    inputDropdown.appendChild(option1);
-
-                    const option2 = document.createElement('option');
-                    option2.value = col;
-                    option2.textContent = col;
-                    classDropdown.appendChild(option2);
-                });
+            // Si la respuesta no es OK, lanza un error detallado
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Error detallado:', errorText);
+                throw new Error(`Error ${response.status}: ${response.statusText}`);
             }
 
-            // Muestra el formulario correspondiente
-            function showForm(formType) {
-                // Ocultar todos los formularios y resultados
-                document.querySelectorAll('.form-container').forEach(form => form.style.display = 'none');
-                document.querySelectorAll('.results').forEach(result => result.style.display = 'none');
+            // Procesa la respuesta JSON y muestra los resultados
+            const data = await response.json();
+            mostrarResultadosEvaluacion(data, inicio);
 
-                // Mostrar el formulario correspondiente
-                if (formType === 'evaluacion') {
-                    document.getElementById('evaluacion-form').style.display = 'block';
-                } else if (formType === 'fine-tuning') {
-                    document.getElementById('fine-tuning-form').style.display = 'block';
-                } else if (formType === 'evaluar') {
-                    document.getElementById('evaluar-modelo-form').style.display = 'block';
-                } else if (formType === 'entrenamiento') {
-                    document.getElementById('entrenamiento-cero-form').style.display = 'block';
-                }
-            }
+        } catch (error) {
+            // Muestra cualquier error ocurrido durante la petición
+            console.error('Error completo:', error);
+            alert(`Error al evaluar: ${error.message}`);
+        } finally {
+            // Oculta el spinner de carga
+            document.getElementById('loading-evaluacion').style.display = 'none';
+        }
+    }
 
+    // Función para mostrar resultados de evaluación del modelo, incluyendo métricas
+    function mostrarResultadosEvaluacion(data, inicio) {
+        const m = data.metrics;
+        const resultadosDiv = document.getElementById('resultados-evaluacion');
+        resultadosDiv.style.display = 'block';
 
-            // Enviar archivo y opciones al backend
-            async function evaluarModelo() {
-                const modelName = document.getElementById('modelo-evaluacion').value;
-                const csvFile = document.getElementById('archivo-evaluacion').files[0];
+        // Construye el HTML con métricas redondeadas a 4 decimales y espacio para gráficos y reporte
+        resultadosDiv.innerHTML = ` 
+            <h3>Resultados de Evaluación del Modelo: ${data.model}</h3>
+            <div class="metrics">
+                <div class="metric-card"><div class="metric-value">${m.accuracy.toFixed(4)}</div><div>Exactitud</div></div>
+                <div class="metric-card"><div class="metric-value">${m.precision.toFixed(4)}</div><div>Precisión</div></div>
+                <div class="metric-card"><div class="metric-value">${m.recall.toFixed(4)}</div><div>Recall</div></div>
+                <div class="metric-card"><div class="metric-value">${m.f1_score.toFixed(4)}</div><div>F1-Score</div></div>
+            </div> 
 
-                if (!csvFile) {
-                    alert('Por favor selecciona un archivo CSV');
-                    return;
-                }
-
-                const inputColumn = document.getElementById('columnDropdown').value;
-                const classColumn = document.getElementById('columnClassDropdown').value;
-
-                // Iniciar cronómetro
-                const inicio = performance.now(); // Capturar el tiempo de inicio
-
-                document.getElementById('loading-evaluacion').style.display = 'block';
-
-                try {
-                    const formData = new FormData();
-                    formData.append('model_name', modelName);
-                    formData.append('csv_file', csvFile);
-                    formData.append('input_column', inputColumn);
-                    formData.append('class_column', classColumn);
-
-                    const response = await fetch('/api/v1/evaluate-model/?model_name=' + modelName, {
-                        method: 'POST',
-                        credentials: 'include',
-                        body: formData
-                    });
-
-                    if (!response.ok) {
-                        const errorText = await response.text();
-                        console.error('Error detallado:', errorText);
-                        throw new Error(`Error ${response.status}: ${response.statusText}`);
-                    }
-
-                    const data = await response.json();
-                    mostrarResultadosEvaluacion(data, inicio); // Pasar el tiempo de inicio
-
-                } catch (error) {
-                    console.error('Error completo:', error);
-                    alert(`Error al evaluar: ${error.message}`);
-                } finally {
-                    document.getElementById('loading-evaluacion').style.display = 'none';
-                }
-            }
-
-            // Mostrar métricas y matriz de confusión
-            function mostrarResultadosEvaluacion(data, inicio) {
-                const m = data.metrics;
-                const resultadosDiv = document.getElementById('resultados-evaluacion');
-                resultadosDiv.style.display = 'block';
-
-                resultadosDiv.innerHTML = ` 
-        <h3>Resultados de Evaluación del Modelo: ${data.model}</h3>
-              <div class="metrics">
-            <div class="metric-card"><div class="metric-value">${m.accuracy.toFixed(4)}</div><div>Exactitud</div></div>
-            <div class="metric-card"><div class="metric-value">${m.precision.toFixed(4)}</div><div>Precisión</div></div>
-            <div class="metric-card"><div class="metric-value">${m.recall.toFixed(4)}</div><div>Recall</div></div>
-            <div class="metric-card"><div class="metric-value">${m.f1_score.toFixed(4)}</div><div>F1-Score</div></div>
-        </div> 
-
-        <div class="radar-container">
-            <canvas id="radarChart"></canvas>
-        </div>
+            <div class="radar-container">
+                <canvas id="radarChart"></canvas>
+            </div>
 
             <div id="resultados-tiempo" style="margin-top: 20px; display: none;">
-        <p id="tiempo-total" style="font-weight: bold;"></p>
-        <p id="tiempo-promedio" style="font-weight: bold;"></p>
-    </div>
-       
-        <div class="download-btn-container">
-            <button onclick="descargarResultados()">Descargar Reporte Completo</button>
-        </div>
-    `;
+                <p id="tiempo-total" style="font-weight: bold;"></p>
+                <p id="tiempo-promedio" style="font-weight: bold;"></p>
+            </div>
+
+            <div class="download-btn-container">
+                <button onclick="descargarResultados()">Descargar Reporte Completo</button>
+            </div>
+        `;
 
                 // gráfico de radar 
                 setTimeout(() => {
@@ -597,6 +664,7 @@
 
                 }, 100);
             }
+            // Función asincrónica que carga los modelos disponibles desde el backend y los agrega a un elemento <select>
             async function cargarModelosDisponibles(idElemento) {
                 const selectModelo = document.getElementById(idElemento);
 
@@ -847,7 +915,7 @@
                 }, 100);
             }
 
-
+// Evento que se ejecuta cuando el usuario selecciona un archivo CSV en el input con id 'archivo-entrenamiento'
             document.getElementById('archivo-entrenamiento').addEventListener('change', function (event) {
                 const file = event.target.files[0];
                 if (!file) return;
@@ -880,6 +948,7 @@
                 });
             });
 
+            // Función asincrónica para iniciar el entrenamiento de un modelo desde cero
             async function iniciarEntrenamientoDesdeCero() {
                 const archivo = document.getElementById('archivo-entrenamiento').files[0];
                 const columnaTexto = document.getElementById('columnDropdownEntrenamiento').value;
