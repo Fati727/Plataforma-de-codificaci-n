@@ -348,8 +348,8 @@
             <!-- Tasa de aprendizaje -->
             <div class="form-group">
                 <label for="tasa-aprendizaje">Tasa de Aprendizaje:</label>
-                <input type="number" id="tasa-aprendizaje-finetuning" class="form-control" min="0.0001" max="0.1" step="0.0001"
-                    value="0.001">
+                <input type="number" id="tasa-aprendizaje-finetuning" class="form-control" min="0.0001" max="0.1"
+                    step="0.0001" value="0.001">
             </div>
 
             <!-- Botón para iniciar fine tuning -->
@@ -412,8 +412,8 @@
             <!-- Tasa de aprendizaje para entrenamiento desde cero -->
             <div class="form-group">
                 <label for="tasa-aprendizaje">Tasa de Aprendizaje:</label>
-                <input type="number" id="tasa-aprendizaje-entrenamiento" class="form-control" min="0.0001" max="0.1" step="0.0001"
-                    value="0.001">
+                <input type="number" id="tasa-aprendizaje-entrenamiento" class="form-control" min="0.0001" max="0.1"
+                    step="0.0001" value="0.001">
             </div>
 
             <!-- Botón para ejecutar el entrenamiento -->
@@ -436,138 +436,138 @@
             <!-- Este contenido será reemplazado dinámicamente por JavaScript -->
         </div>
 
-<!-- Librería PapaParse para leer archivos CSV en el navegador -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+        <!-- Librería PapaParse para leer archivos CSV en el navegador -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 
-<!-- Librería Chart.js para generar gráficos como el de radar -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <!-- Librería Chart.js para generar gráficos como el de radar -->
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<!-- jsPDF para generar archivos PDF desde el navegador -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+        <!-- jsPDF para generar archivos PDF desde el navegador -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-<!-- Complemento de jsPDF para crear tablas dentro del PDF -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+        <!-- Complemento de jsPDF para crear tablas dentro del PDF -->
+        <script
+            src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
 
-<script>
-    // Evento para manejar la carga de un archivo CSV para la evaluación
-    document.getElementById('archivo-evaluacion').addEventListener('change', function (e) {
-        const file = e.target.files[0];
-        if (!file) return;
+        <script>
+            // Evento que se activa cuando el usuario selecciona un archivo para evaluación
+            document.getElementById('archivo-evaluacion').addEventListener('change', function (e) {
+                const file = e.target.files[0]; // Obtiene el archivo seleccionado
+                if (!file) return; // Si no se seleccionó archivo, sale de la función
 
-        // Parseo del archivo CSV usando PapaParse
-        Papa.parse(file, {
-            header: true,
-            dynamicTyping: true,
-            complete: function (results) {
-                const columnNames = Object.keys(results.data[0] || {});
-                llenarDropdown(columnNames); // Llenar los selectores de columnas
-            }
-        });
-    });
-
-    // Llena los selectores desplegables con los nombres de las columnas del CSV
-    function llenarDropdown(columnas) {
-        const inputDropdown = document.getElementById('columnDropdown');
-        const classDropdown = document.getElementById('columnClassDropdown');
-
-        inputDropdown.innerHTML = '';
-        classDropdown.innerHTML = '';
-
-        columnas.forEach(col => {
-            // Crear y añadir opción para la columna de entrada
-            const option1 = document.createElement('option');
-            option1.value = col;
-            option1.textContent = col;
-            inputDropdown.appendChild(option1);
-
-            // Crear y añadir opción para la columna de clasificación
-            const option2 = document.createElement('option');
-            option2.value = col;
-            option2.textContent = col;
-            classDropdown.appendChild(option2);
-        });
-    }
-
-    // Muestra el formulario correspondiente dependiendo de la opción seleccionada
-    function showForm(formType) {
-        // Oculta todos los formularios y resultados actuales
-        document.querySelectorAll('.form-container').forEach(form => form.style.display = 'none');
-        document.querySelectorAll('.results').forEach(result => result.style.display = 'none');
-
-        // Muestra solo el formulario seleccionado
-        if (formType === 'evaluacion') {
-            document.getElementById('evaluacion-form').style.display = 'block';
-        } else if (formType === 'fine-tuning') {
-            document.getElementById('fine-tuning-form').style.display = 'block';
-        } else if (formType === 'evaluar') {
-            document.getElementById('evaluar-modelo-form').style.display = 'block';
-        } else if (formType === 'entrenamiento') {
-            document.getElementById('entrenamiento-cero-form').style.display = 'block';
-        }
-    }
-
-    // Función para enviar archivo y opciones seleccionadas al backend para evaluación del modelo
-    async function evaluarModelo() {
-        const modelName = document.getElementById('modelo-evaluacion').value;
-        const csvFile = document.getElementById('archivo-evaluacion').files[0];
-
-        if (!csvFile) {
-            alert('Por favor selecciona un archivo CSV');
-            return;
-        }
-
-        const inputColumn = document.getElementById('columnDropdown').value;
-        const classColumn = document.getElementById('columnClassDropdown').value;
-
-        // Inicia cronómetro para medir tiempo de ejecución
-        const inicio = performance.now();
-
-        // Muestra spinner de carga
-        document.getElementById('loading-evaluacion').style.display = 'block';
-
-        try {
-            const formData = new FormData();
-            formData.append('model_name', modelName);
-            formData.append('csv_file', csvFile);
-            formData.append('input_column', inputColumn);
-            formData.append('class_column', classColumn);
-
-            // Enviar datos al backend usando fetch y método POST
-            const response = await fetch('/api/v1/evaluate-model/?model_name=' + modelName, {
-                method: 'POST',
-                credentials: 'include',
-                body: formData
+                // Utiliza la librería PapaParse para leer el archivo CSV
+                Papa.parse(file, {
+                    header: true, // Indica que la primera fila tiene encabezados
+                    dynamicTyping: true, // Intenta convertir los valores automáticamente a su tipo correcto (número, booleano, etc.)
+                    complete: function (results) {
+                        const columnNames = Object.keys(results.data[0] || {}); // Obtiene los nombres de las columnas del CSV
+                        llenarDropdown(columnNames); // Llama a una función para llenar los select desplegables con esos nombres
+                    }
+                });
             });
 
-            // Si la respuesta no es OK, lanza un error detallado
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error('Error detallado:', errorText);
-                throw new Error(`Error ${response.status}: ${response.statusText}`);
+            // Llena dos dropdowns con los nombres de las columnas del CSV (uno para entrada y otro para clasificación)
+            function llenarDropdown(columnas) {
+                const inputDropdown = document.getElementById('columnDropdown');
+                const classDropdown = document.getElementById('columnClassDropdown');
+
+                // Limpia cualquier opción anterior en los select
+                inputDropdown.innerHTML = '';
+                classDropdown.innerHTML = '';
+
+                // Por cada columna del CSV, crea una opción en ambos selectores
+                columnas.forEach(col => {
+                    const option1 = document.createElement('option');
+                    option1.value = col;
+                    option1.textContent = col;
+                    inputDropdown.appendChild(option1);
+
+                    const option2 = document.createElement('option');
+                    option2.value = col;
+                    option2.textContent = col;
+                    classDropdown.appendChild(option2);
+                });
             }
 
-            // Procesa la respuesta JSON y muestra los resultados
-            const data = await response.json();
-            mostrarResultadosEvaluacion(data, inicio);
+            // Muestra el formulario correspondiente según el tipo de acción que seleccione el usuario
+            function showForm(formType) {
+                // Oculta todos los formularios y resultados visibles
+                document.querySelectorAll('.form-container').forEach(form => form.style.display = 'none');
+                document.querySelectorAll('.results').forEach(result => result.style.display = 'none');
 
-        } catch (error) {
-            // Muestra cualquier error ocurrido durante la petición
-            console.error('Error completo:', error);
-            alert(`Error al evaluar: ${error.message}`);
-        } finally {
-            // Oculta el spinner de carga
-            document.getElementById('loading-evaluacion').style.display = 'none';
-        }
-    }
+                // Muestra el formulario adecuado según la opción elegida
+                if (formType === 'evaluacion') {
+                    document.getElementById('evaluacion-form').style.display = 'block';
+                } else if (formType === 'fine-tuning') {
+                    document.getElementById('fine-tuning-form').style.display = 'block';
+                } else if (formType === 'evaluar') {
+                    document.getElementById('evaluar-modelo-form').style.display = 'block';
+                } else if (formType === 'entrenamiento') {
+                    document.getElementById('entrenamiento-cero-form').style.display = 'block';
+                }
+            }
 
-    // Función para mostrar resultados de evaluación del modelo, incluyendo métricas
-    function mostrarResultadosEvaluacion(data, inicio) {
-        const m = data.metrics;
-        const resultadosDiv = document.getElementById('resultados-evaluacion');
-        resultadosDiv.style.display = 'block';
+            // Función principal para evaluar el modelo con el archivo CSV y columnas seleccionadas
+            async function evaluarModelo() {
+                const modelName = document.getElementById('modelo-evaluacion').value; // Nombre del modelo seleccionado
+                const csvFile = document.getElementById('archivo-evaluacion').files[0]; // Archivo CSV
 
-        // Construye el HTML con métricas redondeadas a 4 decimales y espacio para gráficos y reporte
-        resultadosDiv.innerHTML = ` 
+                if (!csvFile) {
+                    alert('Por favor selecciona un archivo CSV');
+                    return;
+                }
+
+                const inputColumn = document.getElementById('columnDropdown').value; // Columna de entrada seleccionada
+                const classColumn = document.getElementById('columnClassDropdown').value; // Columna de clasificación seleccionada
+
+                const inicio = performance.now(); // Marca el tiempo de inicio
+
+                document.getElementById('loading-evaluacion').style.display = 'block'; // Muestra el spinner de carga
+
+                try {
+                    // Prepara los datos para enviar al backend
+                    const formData = new FormData();
+                    formData.append('model_name', modelName);
+                    formData.append('csv_file', csvFile);
+                    formData.append('input_column', inputColumn);
+                    formData.append('class_column', classColumn);
+
+                    // Realiza la petición al backend para evaluar el modelo
+                    const response = await fetch('/api/v1/evaluate-model/?model_name=' + modelName, {
+                        method: 'POST',
+                        credentials: 'include',
+                        body: formData
+                    });
+
+                    // Verifica si la respuesta fue exitosa, si no lanza error con detalles
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        console.error('Error detallado:', errorText);
+                        throw new Error(`Error ${response.status}: ${response.statusText}`);
+                    }
+
+                    // Parsea la respuesta como JSON y muestra los resultados
+                    const data = await response.json();
+                    mostrarResultadosEvaluacion(data, inicio);
+
+                } catch (error) {
+                    // Muestra cualquier error durante la solicitud
+                    console.error('Error completo:', error);
+                    alert(`Error al evaluar: ${error.message}`);
+                } finally {
+                    // Oculta el spinner al final del proceso
+                    document.getElementById('loading-evaluacion').style.display = 'none';
+                }
+            }
+
+            // Muestra los resultados devueltos por el backend después de la evaluación del modelo
+            function mostrarResultadosEvaluacion(data, inicio) {
+                const m = data.metrics; // Métricas: exactitud, precisión, recall, f1-score
+                const resultadosDiv = document.getElementById('resultados-evaluacion');
+                resultadosDiv.style.display = 'block'; // Muestra el contenedor de resultados
+
+                // Inserta dinámicamente el HTML con los valores de métricas redondeadas
+                resultadosDiv.innerHTML = ` 
             <h3>Resultados de Evaluación del Modelo: ${data.model}</h3>
             <div class="metrics">
                 <div class="metric-card"><div class="metric-value">${m.accuracy.toFixed(4)}</div><div>Exactitud</div></div>
@@ -577,7 +577,7 @@
             </div> 
 
             <div class="radar-container">
-                <canvas id="radarChart"></canvas>
+                <canvas id="radarChart"></canvas> <!-- Aquí se renderiza el gráfico radar con las métricas -->
             </div>
 
             <div id="resultados-tiempo" style="margin-top: 20px; display: none;">
@@ -586,7 +586,7 @@
             </div>
 
             <div class="download-btn-container">
-                <button onclick="descargarResultados()">Descargar Reporte Completo</button>
+                <button onclick="descargarResultados()">Descargar Reporte Completo</button> <!-- Botón para descargar el reporte -->
             </div>
         `;
 
@@ -915,7 +915,7 @@
                 }, 100);
             }
 
-// Evento que se ejecuta cuando el usuario selecciona un archivo CSV en el input con id 'archivo-entrenamiento'
+            // Evento que se ejecuta cuando el usuario selecciona un archivo CSV en el input con id 'archivo-entrenamiento'
             document.getElementById('archivo-entrenamiento').addEventListener('change', function (event) {
                 const file = event.target.files[0];
                 if (!file) return;
