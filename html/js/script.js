@@ -1,527 +1,528 @@
- // Evento que se activa cuando el usuario selecciona un archivo para evaluación
-            document.getElementById('archivo-evaluacion').addEventListener('change', function (e) {
-                const file = e.target.files[0]; // Obtiene el archivo seleccionado
-                if (!file) return; // Si no se seleccionó archivo, sale de la función
+// Evento que se activa cuando el usuario selecciona un archivo para evaluación
+document.getElementById('archivo-evaluacion').addEventListener('change', function (e) {
+    const file = e.target.files[0]; // Obtiene el archivo seleccionado
+    if (!file) return; // Si no se seleccionó archivo, sale de la función
 
-                // Utiliza la librería PapaParse para leer el archivo CSV
-                Papa.parse(file, {
-                    header: true, // Indica que la primera fila tiene encabezados
-                    dynamicTyping: true, // Intenta convertir los valores automáticamente a su tipo correcto (número, booleano, etc.)
-                    complete: function (results) {
-                        const columnNames = Object.keys(results.data[0] || {}); // Obtiene los nombres de las columnas del CSV
-                        llenarDropdown(columnNames); // Llama a una función para llenar los select desplegables con esos nombres
-                    }
-                });
-            });
+    // Utiliza la librería PapaParse para leer el archivo CSV
+    Papa.parse(file, {
+        header: true, // Indica que la primera fila tiene encabezados
+        dynamicTyping: true, // Intenta convertir los valores automáticamente a su tipo correcto (número, booleano, etc.)
+        complete: function (results) {
+            const columnNames = Object.keys(results.data[0] || {}); // Obtiene los nombres de las columnas del CSV
+            llenarDropdown(columnNames); // Llama a una función para llenar los select desplegables con esos nombres
+        }
+    });
+});
 
-            // Llena dos dropdowns con los nombres de las columnas del CSV (uno para entrada y otro para clasificación)
-            function llenarDropdown(columnas) {
-                const inputDropdown = document.getElementById('columnDropdown');
-                const classDropdown = document.getElementById('columnClassDropdown');
+// Llena dos dropdowns con los nombres de las columnas del CSV (uno para entrada y otro para clasificación)
+function llenarDropdown(columnas) {
+    const inputDropdown = document.getElementById('columnDropdown');
+    const classDropdown = document.getElementById('columnClassDropdown');
 
-                // Limpia cualquier opción anterior en los select
-                inputDropdown.innerHTML = '';
-                classDropdown.innerHTML = '';
+    // Limpia cualquier opción anterior en los select
+    inputDropdown.innerHTML = '';
+    classDropdown.innerHTML = '';
 
-                // Por cada columna del CSV, crea una opción en ambos selectores
-                columnas.forEach(col => {
-                    const option1 = document.createElement('option');
-                    option1.value = col;
-                    option1.textContent = col;
-                    inputDropdown.appendChild(option1);
+    // Por cada columna del CSV, crea una opción en ambos selectores
+    columnas.forEach(col => {
+        const option1 = document.createElement('option');
+        option1.value = col;
+        option1.textContent = col;
+        inputDropdown.appendChild(option1);
 
-                    const option2 = document.createElement('option');
-                    option2.value = col;
-                    option2.textContent = col;
-                    classDropdown.appendChild(option2);
-                });
-            }
+        const option2 = document.createElement('option');
+        option2.value = col;
+        option2.textContent = col;
+        classDropdown.appendChild(option2);
+    });
+}
 
-            // Muestra el formulario correspondiente según el tipo de acción que seleccione el usuario
-            function showForm(formType) {
-                // Oculta todos los formularios y resultados visibles
-                document.querySelectorAll('.form-container').forEach(form => form.style.display = 'none');
-                document.querySelectorAll('.results').forEach(result => result.style.display = 'none');
+// Muestra el formulario correspondiente según el tipo de acción que seleccione el usuario
+function showForm(formType) {
+    // Oculta todos los formularios y resultados visibles
+    document.querySelectorAll('.form-container').forEach(form => form.style.display = 'none');
+    document.querySelectorAll('.results').forEach(result => result.style.display = 'none');
 
-                // Muestra el formulario adecuado según la opción elegida
-                if (formType === 'evaluacion') {
-                    document.getElementById('evaluacion-form').style.display = 'block';
-                } else if (formType === 'fine-tuning') {
-                    document.getElementById('fine-tuning-form').style.display = 'block';
-                } else if (formType === 'evaluar') {
-                    document.getElementById('evaluar-modelo-form').style.display = 'block';
-                } else if (formType === 'entrenamiento') {
-                    document.getElementById('entrenamiento-cero-form').style.display = 'block';
-                }
-            }
+    // Muestra el formulario adecuado según la opción elegida
+    if (formType === 'evaluacion') {
+        document.getElementById('evaluacion-form').style.display = 'block';
+    } else if (formType === 'fine-tuning') {
+        document.getElementById('fine-tuning-form').style.display = 'block';
+    } else if (formType === 'evaluar') {
+        document.getElementById('evaluar-modelo-form').style.display = 'block';
+    } else if (formType === 'entrenamiento') {
+        document.getElementById('entrenamiento-cero-form').style.display = 'block';
+    }
+}
 
-            // Función principal para evaluar el modelo con el archivo CSV y columnas seleccionadas
-            async function evaluarModelo() {
-                const modelName = document.getElementById('modelo-evaluacion').value; // Nombre del modelo seleccionado
-                const csvFile = document.getElementById('archivo-evaluacion').files[0]; // Archivo CSV
+// Función principal para evaluar el modelo con el archivo CSV y columnas seleccionadas
+async function evaluarModelo() {
+    const modelName = document.getElementById('modelo-evaluacion').value; // Nombre del modelo seleccionado
+    const csvFile = document.getElementById('archivo-evaluacion').files[0]; // Archivo CSV
 
-                if (!csvFile) {
-                    alert('Por favor selecciona un archivo CSV');
-                    return;
-                }
+    if (!csvFile) {
+        alert('Por favor selecciona un archivo CSV');
+        return;
+    }
 
-                const inputColumn = document.getElementById('columnDropdown').value; // Columna de entrada seleccionada
-                const classColumn = document.getElementById('columnClassDropdown').value; // Columna de clasificación seleccionada
+    const inputColumn = document.getElementById('columnDropdown').value; // Columna de entrada seleccionada
+    const classColumn = document.getElementById('columnClassDropdown').value; // Columna de clasificación seleccionada
 
-                const inicio = performance.now(); // Marca el tiempo de inicio
+    const inicio = performance.now(); // Marca el tiempo de inicio
 
-                document.getElementById('loading-evaluacion').style.display = 'block'; // Muestra el spinner de carga
+    document.getElementById('loading-evaluacion').style.display = 'block'; // Muestra el spinner de carga
 
-                try {
-                    // Prepara los datos para enviar al backend
-                    const formData = new FormData();
-                    formData.append('model_name', modelName);
-                    formData.append('csv_file', csvFile);
-                    formData.append('input_column', inputColumn);
-                    formData.append('class_column', classColumn);
+    try {
+        // Prepara los datos para enviar al backend
+        const formData = new FormData();
+        formData.append('model_name', modelName);
+        formData.append('csv_file', csvFile);
+        formData.append('input_column', inputColumn);
+        formData.append('class_column', classColumn);
 
-                    // Realiza la petición al backend para evaluar el modelo
-                    const response = await fetch('/api/v1/evaluate-model/?model_name=' + modelName, {
-                        method: 'POST',
-                        credentials: 'include',
-                        body: formData
-                    });
+        // Realiza la petición al backend para evaluar el modelo
+        const response = await fetch('/api/v1/evaluate-model/?model_name=' + modelName, {
+            method: 'POST',
+            credentials: 'include',
+            body: formData
+        });
 
-                    // Verifica si la respuesta fue exitosa, si no lanza error con detalles
-                    if (!response.ok) {
-                        const errorText = await response.text();
-                        console.error('Error detallado:', errorText);
-                        throw new Error(`Error ${response.status}: ${response.statusText}`);
-                    }
+        // Verifica si la respuesta fue exitosa, si no lanza error con detalles
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Error detallado:', errorText);
+            throw new Error(`Error ${response.status}: ${response.statusText}`);
+        }
 
-                    // Parsea la respuesta como JSON y muestra los resultados
-                    const data = await response.json();
-                    mostrarResultadosEvaluacion(data, inicio);
+        // Parsea la respuesta como JSON y muestra los resultados
+        const data = await response.json();
+        mostrarResultadosEvaluacion(data, inicio);
 
-                } catch (error) {
-                    // Muestra cualquier error durante la solicitud
-                    console.error('Error completo:', error);
-                    alert(`Error al evaluar: ${error.message}`);
-                } finally {
-                    // Oculta el spinner al final del proceso
-                    document.getElementById('loading-evaluacion').style.display = 'none';
-                }
-            }
+    } catch (error) {
+        // Muestra cualquier error durante la solicitud
+        console.error('Error completo:', error);
+        alert(`Error al evaluar: ${error.message}`);
+    } finally {
+        // Oculta el spinner al final del proceso
+        document.getElementById('loading-evaluacion').style.display = 'none';
+    }
+}
 
-            // Muestra los resultados devueltos por el backend después de la evaluación del modelo
-            function mostrarResultadosEvaluacion(data, inicio) {
-                const m = data.metrics; // Métricas: exactitud, precisión, recall, f1-score
-                const resultadosDiv = document.getElementById('resultados-evaluacion');
-                resultadosDiv.style.display = 'block'; // Muestra el contenedor de resultados
+// Muestra los resultados devueltos por el backend después de la evaluación del modelo
+function mostrarResultadosEvaluacion(data, inicio) {
+    const m = data.metrics; // Métricas: exactitud, precisión, recall, f1-score
+    const resultadosDiv = document.getElementById('resultados-evaluacion');
+    resultadosDiv.style.display = 'block';
 
-                // Inserta dinámicamente el HTML con los valores de métricas redondeadas
-                resultadosDiv.innerHTML = ` 
-            <h3>Resultados de Evaluación del Modelo: ${data.model}</h3>
-            <div class="metrics">
-                <div class="metric-card"><div class="metric-value">${m.accuracy.toFixed(4)}</div><div>Exactitud</div></div>
-                <div class="metric-card"><div class="metric-value">${m.precision.toFixed(4)}</div><div>Precisión</div></div>
-                <div class="metric-card"><div class="metric-value">${m.recall.toFixed(4)}</div><div>Recall</div></div>
-                <div class="metric-card"><div class="metric-value">${m.f1_score.toFixed(4)}</div><div>F1-Score</div></div>
-            </div> 
+    resultadosDiv.innerHTML = ` 
+        <h3>Resultados de Evaluación del Modelo: ${data.model}</h3>
+        <div class="metrics">
+            <div class="metric-card"><div class="metric-value">${m.accuracy.toFixed(4)}</div><div>Exactitud</div></div>
+            <div class="metric-card"><div class="metric-value">${m.precision.toFixed(4)}</div><div>Precisión</div></div>
+            <div class="metric-card"><div class="metric-value">${m.recall.toFixed(4)}</div><div>Recall</div></div>
+            <div class="metric-card"><div class="metric-value">${m.f1_score.toFixed(4)}</div><div>F1-Score</div></div>
+        </div> 
 
-            <div class="radar-container">
-                <canvas id="radarChart"></canvas> <!-- Aquí se renderiza el gráfico radar con las métricas -->
-            </div>
+        <div class="radar-container">
+            <canvas id="radarChart"></canvas>
+        </div>
 
-            <div id="resultados-tiempo" style="margin-top: 20px; display: none;">
-                <p id="tiempo-total" style="font-weight: bold;"></p>
-                <p id="tiempo-promedio" style="font-weight: bold;"></p>
-            </div>
+        <div id="resultados-tiempo" style="margin-top: 20px; display: none;">
+            <p id="tiempo-total" style="font-weight: bold;"></p>
+            <p id="tiempo-promedio" style="font-weight: bold;"></p>
+        </div>
 
-            <div class="download-btn-container">
-                <button onclick="descargarResultados()">Descargar Reporte Completo</button> <!-- Botón para descargar el reporte -->
-            </div>
-        `;
+        <div class="download-btn-container">
+            <button onclick="descargarResultados()">Descargar Reporte Completo</button>
+        </div>
+    `;
 
-                // gráfico de radar 
-                setTimeout(() => {
-                    const radarData = {
-                        labels: ['Exactitud', 'Precisión', 'Recall', 'F1-score'],
-                        datasets: [{
-                            label: 'Métricas del modelo',
-                            data: [
-                                parseFloat(m.accuracy.toFixed(4)),
-                                parseFloat(m.precision.toFixed(4)),
-                                parseFloat(m.recall.toFixed(4)),
-                                parseFloat(m.f1_score.toFixed(4))
-                            ],
-                            fill: true,
-                            backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                            borderColor: 'rgb(54, 162, 235)',
-                            pointBackgroundColor: 'rgb(54, 162, 235)',
-                            pointBorderColor: '#fff',
-                            pointHoverBackgroundColor: '#fff',
-                            pointHoverBorderColor: 'rgb(54, 162, 235)'
-                        }]
-                    };
+    // gráfico de radar 
+    setTimeout(() => {
+        const radarData = {
+            labels: ['Exactitud', 'Precisión', 'Recall', 'F1-score'],
+            datasets: [{
+                label: 'Métricas del modelo',
+                data: [
+                    parseFloat(m.accuracy.toFixed(4)),
+                    parseFloat(m.precision.toFixed(4)),
+                    parseFloat(m.recall.toFixed(4)),
+                    parseFloat(m.f1_score.toFixed(4))
+                ],
+                fill: true,
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                borderColor: 'rgb(54, 162, 235)',
+                pointBackgroundColor: 'rgb(54, 162, 235)',
+                pointBorderColor: '#fff',
+                pointHoverBackgroundColor: '#fff',
+                pointHoverBorderColor: 'rgb(54, 162, 235)'
+            }]
+        };
 
-                    const radarConfig = {
-                        type: 'radar',
-                        data: radarData,
-                        options: {
-                            responsive: true,
-                            scales: {
-                                r: {
-                                    beginAtZero: true,
-                                    max: 1,
-                                    ticks: {
-                                        stepSize: 0.2
-                                    }
-                                }
-                            },
-                            plugins: {
-                                title: {
-                                    display: true,
-                                    text: 'Resumen de Métricas del Modelo',
-                                    font: {
-                                        size: 16
-                                    }
-                                },
-                                legend: {
-                                    display: false
-                                }
-                            },
-                            elements: {
-                                line: {
-                                    tension: 0.1
-                                }
-                            }
+        const radarConfig = {
+            type: 'radar',
+            data: radarData,
+            options: {
+                responsive: true,
+                scales: {
+                    r: {
+                        beginAtZero: true,
+                        max: 1,
+                        ticks: {
+                            stepSize: 0.2
                         }
-                    };
-
-                    new Chart(
-                        document.getElementById('radarChart'),
-                        radarConfig
-                    );
-
-                    // Calcular y mostrar el tiempo
-                    const fin = performance.now(); // Capturar el tiempo de fin
-                    const tiempoTotalSegundos = (fin - inicio) / 1000; // Convertir de ms a segundos
-                    const tiempoPromedio = tiempoTotalSegundos / 1;
-
-                    document.getElementById('tiempo-total').textContent = ` Tiempo total: ${tiempoTotalSegundos.toFixed(2)} segundos`;
-                    document.getElementById('tiempo-promedio').textContent = `Tiempo promedio por registro: ${tiempoPromedio.toFixed(4)} segundos`;
-
-                    // Mostrar los resultados de tiempo después de la gráfica
-                    document.getElementById('resultados-tiempo').style.display = 'block';
-
-                }, 100);
-            }
-            // Función asincrónica que carga los modelos disponibles desde el backend y los agrega a un elemento <select>
-            async function cargarModelosDisponibles(idElemento) {
-                const selectModelo = document.getElementById(idElemento);
-
-                try {
-                    const response = await fetch('/api/v1/modelos-disponibles/');
-                    if (!response.ok) {
-                        throw new Error(`Error al obtener modelos: ${response.statusText}`);
                     }
-
-                    const modelos = await response.json();
-
-                    selectModelo.innerHTML = '<option disabled selected>Selecciona un modelo</option>';
-
-                    modelos.forEach(modelo => {
-                        const option = document.createElement('option');
-                        option.value = modelo.nombre;
-                        option.textContent = `${modelo.nombre} (ID: ${modelo.id})`;
-                        selectModelo.appendChild(option);
-                    });
-                } catch (error) {
-                    console.error('Error cargando modelos:', error);
-                    alert('No se pudieron cargar los modelos disponibles.');
-                }
-            }
-
-            // Llamar automáticamente al cargar la página
-            document.addEventListener('DOMContentLoaded', () => {
-                cargarModelosDisponibles('modelo-evaluacion');
-                cargarModelosDisponibles('modelo-base');
-                cargarModelosDisponibles('modelo-entrenamiento');
-            });
-
-
-            // Descarga de resultados 
-            async function descargarResultados() {
-                const resultadosDiv = document.getElementById('resultados-evaluacion');
-                if (!resultadosDiv || resultadosDiv.style.display === 'none') {
-                    alert("Primero realiza una evaluación para poder descargar el reporte.");
-                    return;
-                }
-
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF();
-                const date = new Date();
-                const fechaHora = date.toLocaleString();
-
-                const modelName = document.querySelector('#resultados-evaluacion h3')?.innerText || "Modelo Desconocido";
-                const metricValues = document.querySelectorAll('.metric-value');
-                const tableCells = document.querySelectorAll('table td');
-
-                const exactitud = metricValues[0]?.innerText || "N/A";
-                const precision = metricValues[1]?.innerText || "N/A";
-                const recall = metricValues[2]?.innerText || "N/A";
-                const f1 = metricValues[3]?.innerText || "N/A";
-
-                const tp = tableCells[0]?.innerText || "N/A";
-                const fn = tableCells[1]?.innerText || "N/A";
-                const fp = tableCells[2]?.innerText || "N/A";
-                const tn = tableCells[3]?.innerText || "N/A";
-
-                // === ENCABEZADO ===
-                doc.setFillColor(33, 150, 243); // azul moderno
-                doc.rect(0, 0, 210, 20, 'F');
-                doc.setTextColor(255, 255, 255);
-                doc.setFontSize(16);
-                doc.setFont("helvetica", "bold");
-                doc.text("Reporte de Evaluación de Modelo", 105, 12, null, null, 'center');
-
-                let y = 30;
-                doc.setTextColor(0, 0, 0);
-                doc.setFontSize(11);
-                doc.setFont("helvetica", "normal");
-                doc.text(`Fecha y hora: ${fechaHora}`, 20, y); y += 10;
-
-                // === Modelo ===
-                doc.setFont("helvetica", "bold");
-                doc.text("Modelo evaluado:", 20, y);
-                doc.setFont("helvetica", "normal");
-                doc.text(modelName, 60, y); y += 10;
-
-                // === Métricas ===
-                doc.setFont("helvetica", "bold");
-                doc.setFontSize(13);
-                doc.text("Métricas de Rendimiento", 20, y); y += 5;
-                doc.setDrawColor(200);
-                doc.line(20, y, 190, y); y += 6;
-
-                doc.setFont("helvetica", "normal");
-                doc.setFontSize(11);
-                doc.text(`Exactitud:  ${exactitud}`, 25, y); y += 6;
-                doc.text(`Precisión:  ${precision}`, 25, y); y += 6;
-                doc.text(`Recall:     ${recall}`, 25, y); y += 6;
-                doc.text(`F1-Score:   ${f1}`, 25, y); y += 12;
-
-                // === MATRIZ DE CONFUSIÓN ===
-                doc.setFont("helvetica", "bold");
-                doc.setFontSize(13);
-                doc.text("Matriz de Confusión", 20, y); y += 5;
-                doc.line(20, y, 190, y); y += 4;
-
-                doc.autoTable({
-                    startY: y,
-                    head: [['', 'Predicho Positivo', 'Predicho Negativo']],
-                    body: [
-                        ['Real Positivo', tp, fn],
-                        ['Real Negativo', fp, tn]
-                    ],
-                    theme: 'grid',
-                    styles: {
-                        halign: 'center',
-                        valign: 'middle',
-                        fontSize: 11
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Resumen de Métricas del Modelo',
+                        font: {
+                            size: 16
+                        }
                     },
-                    headStyles: {
-                        fillColor: [33, 150, 243],
-                        textColor: 255,
-                        fontStyle: 'bold'
+                    legend: {
+                        display: false
                     }
-                });
-
-                const finalY = doc.lastAutoTable.finalY || y + 20;
-
-                // === GRÁFICA EN NUEVA PÁGINA ===
-                const canvas = document.getElementById('radarChart');
-                if (canvas) {
-                    const imgData = canvas.toDataURL('image/png');
-                    doc.addPage();
-                    doc.setFont("helvetica", "bold");
-                    doc.setFontSize(14);
-                    doc.text("Gráfica de Radar - Métricas del Modelo", 105, 20, null, null, 'center');
-                    doc.addImage(imgData, 'PNG', 15, 30, 180, 120);
+                },
+                elements: {
+                    line: {
+                        tension: 0.1
+                    }
                 }
-
-                doc.save('reporte_modelo.pdf');
             }
+        };
 
-            // Manejo del archivo CSV en Fine-Tuning para extraer columnas y llenar los dropdowns
-            document.getElementById('archivo-finetuning').addEventListener('change', function (e) {
+        new Chart(
+            document.getElementById('radarChart'),
+            radarConfig
+        );
 
-                const file = e.target.files[0];
-                if (!file) return;
+        // Calcular y mostrar el tiempo
+        const fin = performance.now();
+        const tiempoTotalSegundos = (fin - inicio) / 1000;
 
-                Papa.parse(file, {
-                    header: true,
-                    dynamicTyping: true,
-                    complete: function (results) {
-                        const columnNames = Object.keys(results.data[0] || {});
-                        llenarDropdownFineTuning(columnNames);
-                    }
-                });
+        // Obtener el número de registros desde data.dataset_stats.samples
+        const totalRegistros = data.dataset_stats.samples || 1; // Si no viene, evita división por cero
+        const tiempoPromedio = tiempoTotalSegundos / totalRegistros;
+
+        document.getElementById('tiempo-total').textContent = ` Tiempo total: ${tiempoTotalSegundos.toFixed(2)} segundos`;
+        document.getElementById('tiempo-promedio').textContent = `Tiempo promedio por registro: ${tiempoPromedio.toFixed(4)} segundos`;
+
+        document.getElementById('resultados-tiempo').style.display = 'block';
+
+    }, 100);
+}
+// Función asincrónica que carga los modelos disponibles desde el backend y los agrega a un elemento <select>
+async function cargarModelosDisponibles(idElemento) {
+    const selectModelo = document.getElementById(idElemento);
+
+    try {
+        const response = await fetch('/api/v1/modelos-disponibles/');
+        if (!response.ok) {
+            throw new Error(`Error al obtener modelos: ${response.statusText}`);
+        }
+
+        const modelos = await response.json();
+
+        selectModelo.innerHTML = '<option disabled selected>Selecciona un modelo</option>';
+
+        modelos.forEach(modelo => {
+            const option = document.createElement('option');
+            option.value = modelo.nombre;
+            option.textContent = `${modelo.nombre} (ID: ${modelo.id})`;
+            selectModelo.appendChild(option);
+        });
+    } catch (error) {
+        console.error('Error cargando modelos:', error);
+        alert('No se pudieron cargar los modelos disponibles.');
+    }
+}
+
+// Llamar automáticamente al cargar la página
+document.addEventListener('DOMContentLoaded', () => {
+    cargarModelosDisponibles('modelo-evaluacion');
+    cargarModelosDisponibles('modelo-base');
+    cargarModelosDisponibles('modelo-entrenamiento');
+});
+
+
+// Descarga de resultados 
+async function descargarResultados() {
+    const resultadosDiv = document.getElementById('resultados-evaluacion');
+    if (!resultadosDiv || resultadosDiv.style.display === 'none') {
+        alert("Primero realiza una evaluación para poder descargar el reporte.");
+        return;
+    }
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const date = new Date();
+    const fechaHora = date.toLocaleString();
+
+    const modelName = document.querySelector('#resultados-evaluacion h3')?.innerText || "Modelo Desconocido";
+    const metricValues = document.querySelectorAll('.metric-value');
+    const tableCells = document.querySelectorAll('table td');
+
+    const exactitud = metricValues[0]?.innerText || "N/A";
+    const precision = metricValues[1]?.innerText || "N/A";
+    const recall = metricValues[2]?.innerText || "N/A";
+    const f1 = metricValues[3]?.innerText || "N/A";
+
+    const tp = tableCells[0]?.innerText || "N/A";
+    const fn = tableCells[1]?.innerText || "N/A";
+    const fp = tableCells[2]?.innerText || "N/A";
+    const tn = tableCells[3]?.innerText || "N/A";
+
+    // === ENCABEZADO ===
+    doc.setFillColor(33, 150, 243); // azul moderno
+    doc.rect(0, 0, 210, 20, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.text("Reporte de Evaluación de Modelo", 105, 12, null, null, 'center');
+
+    let y = 30;
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Fecha y hora: ${fechaHora}`, 20, y); y += 10;
+
+    // === Modelo ===
+    doc.setFont("helvetica", "bold");
+    doc.text("Modelo evaluado:", 20, y);
+    doc.setFont("helvetica", "normal");
+    doc.text(modelName, 60, y); y += 10;
+
+    // === Métricas ===
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(13);
+    doc.text("Métricas de Rendimiento", 20, y); y += 5;
+    doc.setDrawColor(200);
+    doc.line(20, y, 190, y); y += 6;
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(11);
+    doc.text(`Exactitud:  ${exactitud}`, 25, y); y += 6;
+    doc.text(`Precisión:  ${precision}`, 25, y); y += 6;
+    doc.text(`Recall:     ${recall}`, 25, y); y += 6;
+    doc.text(`F1-Score:   ${f1}`, 25, y); y += 12;
+
+    // === MATRIZ DE CONFUSIÓN ===
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(13);
+    doc.text("Matriz de Confusión", 20, y); y += 5;
+    doc.line(20, y, 190, y); y += 4;
+
+    doc.autoTable({
+        startY: y,
+        head: [['', 'Predicho Positivo', 'Predicho Negativo']],
+        body: [
+            ['Real Positivo', tp, fn],
+            ['Real Negativo', fp, tn]
+        ],
+        theme: 'grid',
+        styles: {
+            halign: 'center',
+            valign: 'middle',
+            fontSize: 11
+        },
+        headStyles: {
+            fillColor: [33, 150, 243],
+            textColor: 255,
+            fontStyle: 'bold'
+        }
+    });
+
+    const finalY = doc.lastAutoTable.finalY || y + 20;
+
+    // === GRÁFICA EN NUEVA PÁGINA ===
+    const canvas = document.getElementById('radarChart');
+    if (canvas) {
+        const imgData = canvas.toDataURL('image/png');
+        doc.addPage();
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(14);
+        doc.text("Gráfica de Radar - Métricas del Modelo", 105, 20, null, null, 'center');
+        doc.addImage(imgData, 'PNG', 15, 30, 180, 120);
+    }
+
+    doc.save('reporte_modelo.pdf');
+}
+
+// Manejo del archivo CSV en Fine-Tuning para extraer columnas y llenar los dropdowns
+document.getElementById('archivo-finetuning').addEventListener('change', function (e) {
+
+    const file = e.target.files[0];
+    if (!file) return;
+
+    Papa.parse(file, {
+        header: true,
+        dynamicTyping: true,
+        complete: function (results) {
+            const columnNames = Object.keys(results.data[0] || {});
+            llenarDropdownFineTuning(columnNames);
+        }
+    });
+});
+
+// Manejo del archivo CSV para Fine-Tuning
+document.getElementById('archivo-finetuning').addEventListener('change', function (e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    Papa.parse(file, {
+        header: true,
+        dynamicTyping: true,
+        complete: function (results) {
+            const columnNames = Object.keys(results.data[0] || {});
+            llenarDropdownFineTuning(columnNames);
+        }
+    });
+});
+
+// Llena los dropdowns de columna de entrada y clasificación para Fine-Tuning
+function llenarDropdownFineTuning(columnas) {
+    const inputDropdown = document.getElementById('columnDropdownFineTuning');
+    const classDropdown = document.getElementById('columnClassDropdownFineTuning');
+
+    inputDropdown.innerHTML = '';
+    classDropdown.innerHTML = '';
+
+    columnas.forEach(col => {
+        const option1 = document.createElement('option');
+        option1.value = col;
+        option1.textContent = col;
+        inputDropdown.appendChild(option1);
+
+        const option2 = document.createElement('option');
+        option2.value = col;
+        option2.textContent = col;
+        classDropdown.appendChild(option2);
+    });
+}
+
+
+// Función para iniciar el proceso real de Fine Tuning
+async function iniciarFineTuning() {
+    const archivo = document.getElementById('archivo-finetuning').files[0];
+    const modeloBase = document.getElementById('modelo-base').value;
+    const epocas = document.getElementById('epocas').value;
+
+    if (!archivo) {
+        alert('Por favor selecciona un archivo CSV');
+        return;
+    }
+
+    // Crear el FormData
+    const formData = new FormData();
+    formData.append("file", archivo);
+    formData.append("modelo", modeloBase);
+    formData.append("epocas", epocas);
+
+    try {
+        // Mostrar el estado de carga antes de enviar
+        document.getElementById('loading-fine-tuning').style.display = 'block';
+        document.getElementById('avance-fine-tuning').style.display = 'block';
+
+        // Enviar al backend
+        const response = await fetch("/api/v1/fine-tuning/", {
+            method: "POST",
+            body: formData
+        });
+
+        const resultado = await response.json();
+
+        if (resultado.status === "ok") {
+            // Iniciar simulación de entrenamiento
+            ejecutarFineTuning();
+        } else {
+            throw new Error("El servidor no respondió 'ok'");
+        }
+
+    } catch (error) {
+        console.error("Error:", error);
+        alert("Ocurrió un error durante el fine tuning.");
+        document.getElementById('loading-finetuning').style.display = 'none';
+        document.getElementById('avance-finetuning').style.display = 'none';
+    }
+}
+
+// Simulación de pasos de entrenamiento
+function ejecutarFineTuning() {
+    let pasos = 0;
+    const totalPasos = 100;
+    const intervalo = setInterval(() => {
+        pasos++;
+        document.getElementById('pasos-entrenamiento').textContent = pasos;
+
+        if (pasos >= totalPasos) {
+            clearInterval(intervalo);
+            document.getElementById('loading-finetuning').style.display = 'none';
+            alert("Fine tuning completado exitosamente.");
+        }
+    }, 100);
+}
+
+// Evento que se ejecuta cuando el usuario selecciona un archivo CSV en el input con id 'archivo-entrenamiento'
+document.getElementById('archivo-entrenamiento').addEventListener('change', function (event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    Papa.parse(file, {
+        header: true,
+        skipEmptyLines: true,
+        complete: function (results) {
+            const columnas = Object.keys(results.data[0]);
+
+            // Rellenar los dos selects
+            const textoSelect = document.getElementById('columnDropdownEntrenamiento');
+            const claseSelect = document.getElementById('columnClassDropdownEntrenamiento');
+
+            textoSelect.innerHTML = '';
+            claseSelect.innerHTML = '';
+
+            columnas.forEach(col => {
+                const textoOption = document.createElement('option');
+                textoOption.value = col;
+                textoOption.textContent = col;
+                textoSelect.appendChild(textoOption);
+
+                const claseOption = document.createElement('option');
+                claseOption.value = col;
+                claseOption.textContent = col;
+                claseSelect.appendChild(claseOption);
             });
+        }
+    });
+});
 
-            // Manejo del archivo CSV para Fine-Tuning
-            document.getElementById('archivo-finetuning').addEventListener('change', function (e) {
-                const file = e.target.files[0];
-                if (!file) return;
+// Función asincrónica para iniciar el entrenamiento de un modelo desde cero
+async function iniciarEntrenamientoDesdeCero() {
+    const archivo = document.getElementById('archivo-entrenamiento').files[0];
+    const columnaTexto = document.getElementById('columnDropdownEntrenamiento').value;
+    const columnaClase = document.getElementById('columnClassDropdownEntrenamiento').value;
 
-                Papa.parse(file, {
-                    header: true,
-                    dynamicTyping: true,
-                    complete: function (results) {
-                        const columnNames = Object.keys(results.data[0] || {});
-                        llenarDropdownFineTuning(columnNames);
-                    }
-                });
-            });
+    if (!archivo || !columnaTexto || !columnaClase) {
+        alert("Selecciona el archivo, la columna de texto y la de clasificación.");
+        return;
+    }
 
-            // Llena los dropdowns de columna de entrada y clasificación para Fine-Tuning
-            function llenarDropdownFineTuning(columnas) {
-                const inputDropdown = document.getElementById('columnDropdownFineTuning');
-                const classDropdown = document.getElementById('columnClassDropdownFineTuning');
+    const formData = new FormData();
+    formData.append("archivo", archivo);
+    formData.append("columna_texto", columnaTexto);
+    formData.append("columna_clase", columnaClase);
 
-                inputDropdown.innerHTML = '';
-                classDropdown.innerHTML = '';
+    try {
+        const response = await fetch("/api/v1/entrenamiento-desde-cero/", {
+            method: "POST",
+            body: formData
+        });
 
-                columnas.forEach(col => {
-                    const option1 = document.createElement('option');
-                    option1.value = col;
-                    option1.textContent = col;
-                    inputDropdown.appendChild(option1);
-
-                    const option2 = document.createElement('option');
-                    option2.value = col;
-                    option2.textContent = col;
-                    classDropdown.appendChild(option2);
-                });
-            }
-
-
-            // Función para iniciar el proceso real de Fine Tuning
-            async function iniciarFineTuning() {
-                const archivo = document.getElementById('archivo-finetuning').files[0];
-                const modeloBase = document.getElementById('modelo-base').value;
-                const epocas = document.getElementById('epocas').value;
-
-                if (!archivo) {
-                    alert('Por favor selecciona un archivo CSV');
-                    return;
-                }
-
-                // Crear el FormData
-                const formData = new FormData();
-                formData.append("file", archivo);
-                formData.append("modelo", modeloBase);
-                formData.append("epocas", epocas);
-
-                try {
-                    // Mostrar el estado de carga antes de enviar
-                    document.getElementById('loading-fine-tuning').style.display = 'block';
-                    document.getElementById('avance-fine-tuning').style.display = 'block';
-
-                    // Enviar al backend
-                    const response = await fetch("/api/v1/fine-tuning/", {
-                        method: "POST",
-                        body: formData
-                    });
-
-                    const resultado = await response.json();
-
-                    if (resultado.status === "ok") {
-                        // Iniciar simulación de entrenamiento
-                        ejecutarFineTuning();
-                    } else {
-                        throw new Error("El servidor no respondió 'ok'");
-                    }
-
-                } catch (error) {
-                    console.error("Error:", error);
-                    alert("Ocurrió un error durante el fine tuning.");
-                    document.getElementById('loading-finetuning').style.display = 'none';
-                    document.getElementById('avance-finetuning').style.display = 'none';
-                }
-            }
-
-            // Simulación de pasos de entrenamiento
-            function ejecutarFineTuning() {
-                let pasos = 0;
-                const totalPasos = 100;
-                const intervalo = setInterval(() => {
-                    pasos++;
-                    document.getElementById('pasos-entrenamiento').textContent = pasos;
-
-                    if (pasos >= totalPasos) {
-                        clearInterval(intervalo);
-                        document.getElementById('loading-finetuning').style.display = 'none';
-                        alert("Fine tuning completado exitosamente.");
-                    }
-                }, 100);
-            }
-
-            // Evento que se ejecuta cuando el usuario selecciona un archivo CSV en el input con id 'archivo-entrenamiento'
-            document.getElementById('archivo-entrenamiento').addEventListener('change', function (event) {
-                const file = event.target.files[0];
-                if (!file) return;
-
-                Papa.parse(file, {
-                    header: true,
-                    skipEmptyLines: true,
-                    complete: function (results) {
-                        const columnas = Object.keys(results.data[0]);
-
-                        // Rellenar los dos selects
-                        const textoSelect = document.getElementById('columnDropdownEntrenamiento');
-                        const claseSelect = document.getElementById('columnClassDropdownEntrenamiento');
-
-                        textoSelect.innerHTML = '';
-                        claseSelect.innerHTML = '';
-
-                        columnas.forEach(col => {
-                            const textoOption = document.createElement('option');
-                            textoOption.value = col;
-                            textoOption.textContent = col;
-                            textoSelect.appendChild(textoOption);
-
-                            const claseOption = document.createElement('option');
-                            claseOption.value = col;
-                            claseOption.textContent = col;
-                            claseSelect.appendChild(claseOption);
-                        });
-                    }
-                });
-            });
-
-            // Función asincrónica para iniciar el entrenamiento de un modelo desde cero
-            async function iniciarEntrenamientoDesdeCero() {
-                const archivo = document.getElementById('archivo-entrenamiento').files[0];
-                const columnaTexto = document.getElementById('columnDropdownEntrenamiento').value;
-                const columnaClase = document.getElementById('columnClassDropdownEntrenamiento').value;
-
-                if (!archivo || !columnaTexto || !columnaClase) {
-                    alert("Selecciona el archivo, la columna de texto y la de clasificación.");
-                    return;
-                }
-
-                const formData = new FormData();
-                formData.append("archivo", archivo);
-                formData.append("columna_texto", columnaTexto);
-                formData.append("columna_clase", columnaClase);
-
-                try {
-                    const response = await fetch("/api/v1/entrenamiento-desde-cero/", {
-                        method: "POST",
-                        body: formData
-                    });
-
-                    const resultado = await response.json();
-                    alert("Entrenamiento: " + resultado.mensaje);
-                } catch (error) {
-                    console.error("Error:", error);
-                    alert("Ocurrió un error durante el entrenamiento.");
-                }
-            }
+        const resultado = await response.json();
+        alert("Entrenamiento: " + resultado.mensaje);
+    } catch (error) {
+        console.error("Error:", error);
+        alert("Ocurrió un error durante el entrenamiento.");
+    }
+}
