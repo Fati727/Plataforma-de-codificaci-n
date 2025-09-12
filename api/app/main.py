@@ -7,6 +7,8 @@ import pandas as pd
 import io
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
 import requests
+import traceback
+import time
 
 # Se crea una instancia principal de la aplicación FastAPI
 app = FastAPI()
@@ -122,14 +124,16 @@ async def evaluate_model(
         y_true = df[col_clasificacion].astype(str).tolist() #Valores reales
         
         # Llama a la función para obtener las etiquetas reales y predichas
+        tiempo_inicio = time.time()
         y_pred = await codifica_(model_name, df, col_texto)
+        delta_tiempo = time.time() - tiempo_inicio
         
         # Calcula métricas de evaluación
         accuracy = accuracy_score(y_true, y_pred)
         precision = precision_score(y_true, y_pred, average='macro', zero_division=0)
         recall = recall_score(y_true, y_pred, average='macro', zero_division=0)
         f1 = f1_score(y_true, y_pred, average='macro', zero_division=0)
-        cm = confusion_matrix(y_true, y_pred).tolist()
+        #cm = confusion_matrix(y_true, y_pred).tolist()
 
         # Retorna un diccionario con los resultados
         return {
@@ -139,23 +143,31 @@ async def evaluate_model(
                 "precision": precision,
                 "recall": recall,
                 "f1_score": f1,
-                "confusion_matrix": cm
+                #"confusion_matrix": cm
             },
             "dataset_stats": {
                 "samples": len(df),  # Cantidad de registro
                 "features": len(df.columns) - 1 # Número de características (menos la etiqueta)
-
+            },
+            "performance": {
+                "computation_time_seconds": delta_tiempo,  # Tiempo de cómputo (si se mide)
+                "computation_time_per_sample_seconds": delta_tiempo/len(df)  # Tiempo por muestra {tiempo_total / número_de_muestras
             }
         }
 
 # Manejo de errores para distintos problemas comunes
     except pd.errors.EmptyDataError:
+        traceback.print_exc()
         raise HTTPException(status_code=400, detail="El archivo CSV está vacío")
     except UnicodeDecodeError:
         raise HTTPException(status_code=400, detail="El archivo no tiene codificación UTF-8 válida")
     except HTTPException as e:
         raise e
     except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Error al procesar el archivo")
+    
+
 async def obtener_dataframe_desde_csv(csv_file: UploadFile) -> pd.DataFrame:
     # Verifica que el archivo sea un CSV válido
     if not csv_file.filename.lower().endswith('.csv'):
