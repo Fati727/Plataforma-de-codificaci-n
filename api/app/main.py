@@ -37,16 +37,16 @@ def read_item(item_id: int, q: Union[str, None] = None):
 class Modelo(BaseModel):
     nombre: str
     id: int
-# Lista de modelos de lenguaje disponibles
-modelos_disponibles = [
-    {"id": 1, "nombre": "BERT"},
-    {"id": 2, "nombre": "RoBERTa"},
-    {"id": 3, "nombre": "DistilBERT"}
-]
 
 # Endpoint que retorna los modelos disponibles
 @router.get("/modelos-disponibles/", response_model=List[Modelo])
 async def obtener_modelos_disponibles():
+# Lista de modelos de lenguaje disponibles
+    modelos_disponibles = [
+        {"id": 1, "nombre": "T1 ENIGH SCIAN"},
+        {"id": 2, "nombre": "T1 ENIGH SINCO"},
+        #{"id": 3, "nombre": "DistilBERT"}
+    ]
     modelos = [{"nombre": modelo["nombre"], "id": modelo["id"]} for modelo in modelos_disponibles]
     return modelos
 
