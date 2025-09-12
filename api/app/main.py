@@ -166,6 +166,48 @@ async def obtener_dataframe_desde_csv(csv_file: UploadFile) -> pd.DataFrame:
     df = pd.read_csv(data)
     return df
 
+
+# Función interna para obtener y_true y y_pred
+#def obtener_valores_y(df: pd.DataFrame, col_clasificacion: str, col_texto: str):
+@router.post("/modelos/{model_name}/codifica/")
+async def codifica(
+    model_name: str,          # Nombre del modelo a usar
+    col_texto: str,           #Columna texto
+    csv_file: UploadFile = File(...),      # Archivo CSV con datos de prueba
+):
+    df = await obtener_dataframe_desde_csv(csv_file)
+
+    tiempo_inicio = time.time()
+    resultado = await codifica_(model_name, df, col_texto)
+    delta_tiempo = time.time() - tiempo_inicio
+
+    df["resultado_codficacion"] = resultado
+    return {
+            "model": model_name,
+            "dataset": df.to_dict(orient="split"),
+            "performance": {
+                "computation_time_seconds": delta_tiempo,  # Tiempo de cómputo (si se mide)
+                "computation_time_per_sample_seconds": delta_tiempo/len(df)  # Tiempo por muestra {tiempo_total / número_de_muestras
+            }
+        }
+
+    return 
+
+async def codifica_(
+    model_name: str = Form(...),          # Nombre del modelo a usar
+    df: UploadFile = File(...),      # Archivo CSV con datos de prueba
+    col_texto: str = Form(None),           #Columna texto
+):
+    if model_name == "T1 ENIGH SCIAN":
+        y_pred = obtener_enigh_t1(model="scian", df=df, col_texto=col_texto)
+    elif model_name == "T1 ENIGH SINCO":
+        y_pred = obtener_enigh_t1(model="sinco", df=df, col_texto=col_texto)
+    else:
+        raise HTTPException(status_code=400, detail=f"Modelo '{model_name}' no soportado")
+
+
+    return y_pred
+
 def obtener_enigh_t1(
     model: str,          # Nombre del modelo a usar
     df: pd.DataFrame ,      # Archivo CSV con datos de prueba

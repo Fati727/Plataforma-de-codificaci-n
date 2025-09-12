@@ -18,6 +18,12 @@
 
     <!-- Contenedor de tarjetas para seleccionar una opción -->
     <div class="card-container">
+        <!-- Tarjeta: Clasificación -->
+        <div class="card" onclick="showForm('clasificacion')">
+            <h2>Clasificación con Modelos</h2>
+            <p>Clasifique nuevos datos con los modelos existentes</p>
+        </div>
+
         <!-- Tarjeta: Evaluación de modelos -->
         <div class="card" onclick="showForm('evaluacion')">
             <h2>Evaluación de Modelos</h2>
@@ -34,6 +40,38 @@
         <div class="card" onclick="showForm('entrenamiento')">
             <h2>Entrenamiento desde Cero</h2>
             <p>Entrene un nuevo modelo con su arquitectura y datos personalizados.</p>
+        </div>
+        <!-- =================== FORMULARIO DE CLASIFICACION =================== -->
+        <div id="clasificacion-form" class="form-container">
+            <h2>Evaluación de Modelos</h2>
+
+            <!-- Selección del modelo preentrenado -->
+            <div class="form-group">
+                <label for="modelo-clasificacion">Seleccione un modelo:</label>
+                <select id="modelo-clasificacion">
+                </select>
+            </div>
+
+            <!-- Carga del archivo CSV -->
+            <div class="form-group">
+                <label for="archivo-clasificacion">Suba su archivo CSV:</label>
+                <input type="file" id="archivo-clasificacion" accept=".csv">
+            </div>
+
+            <!-- Selección de la columna de texto -->
+            <div class="form-group">
+                <label for="column-texto-clasificacion">Seleccione una columna de texto:</label>
+                <select id="column-texto-clasificacion"></select>
+            </div>
+
+            <!-- Botón para ejecutar la evaluación -->
+            <button onclick="clasificarModelo()">Ejecutar Clasificación</button>
+
+            <!-- Indicador de carga mientras se ejecuta la evaluación -->
+            <div id="loading-evaluacion" class="loading">
+                <div class="spinner"></div>
+                <p>Procesando clasificacion, por favor espere...</p>
+            </div>
         </div>
 
         <!-- =================== FORMULARIO DE EVALUACIÓN =================== -->

@@ -9,19 +9,33 @@ document.getElementById('archivo-evaluacion').addEventListener('change', functio
         dynamicTyping: true, // Intenta convertir los valores automáticamente a su tipo correcto (número, booleano, etc.)
         complete: function (results) {
             const columnNames = Object.keys(results.data[0] || {}); // Obtiene los nombres de las columnas del CSV
-            llenarDropdown(columnNames); // Llama a una función para llenar los select desplegables con esos nombres
+            llenarDropdown(columnNames,'columnDropdown'); // Llama a una función para llenar los select desplegables con esos nombres
+            llenarDropdown(columnNames,'columnClassDropdown'); // Llama a una función para llenar los select desplegables con esos nombres
+        }
+    });
+});
+// Evento que se activa cuando el usuario selecciona un archivo para evaluación
+document.getElementById('archivo-clasificacion').addEventListener('change', function (e) {
+    const file = e.target.files[0]; // Obtiene el archivo seleccionado
+    if (!file) return; // Si no se seleccionó archivo, sale de la función
+
+    // Utiliza la librería PapaParse para leer el archivo CSV
+    Papa.parse(file, {
+        header: true, // Indica que la primera fila tiene encabezados
+        dynamicTyping: true, // Intenta convertir los valores automáticamente a su tipo correcto (número, booleano, etc.)
+        complete: function (results) {
+            const columnNames = Object.keys(results.data[0] || {}); // Obtiene los nombres de las columnas del CSV
+            llenarDropdown(columnNames,'column-texto-clasificacion'); // Llama a una función para llenar los select desplegables con esos nombres
         }
     });
 });
 
 // Llena dos dropdowns con los nombres de las columnas del CSV (uno para entrada y otro para clasificación)
-function llenarDropdown(columnas) {
-    const inputDropdown = document.getElementById('columnDropdown');
-    const classDropdown = document.getElementById('columnClassDropdown');
+function llenarDropdown(columnas, id_elemento) {
+    const inputDropdown = document.getElementById(id_elemento);
 
     // Limpia cualquier opción anterior en los select
     inputDropdown.innerHTML = '';
-    classDropdown.innerHTML = '';
 
     // Por cada columna del CSV, crea una opción en ambos selectores
     columnas.forEach(col => {
@@ -29,11 +43,6 @@ function llenarDropdown(columnas) {
         option1.value = col;
         option1.textContent = col;
         inputDropdown.appendChild(option1);
-
-        const option2 = document.createElement('option');
-        option2.value = col;
-        option2.textContent = col;
-        classDropdown.appendChild(option2);
     });
 }
 
@@ -44,7 +53,9 @@ function showForm(formType) {
     document.querySelectorAll('.results').forEach(result => result.style.display = 'none');
 
     // Muestra el formulario adecuado según la opción elegida
-    if (formType === 'evaluacion') {
+    if (formType === 'clasificacion') {
+        document.getElementById('clasificacion-form').style.display = 'block';
+    } else if (formType === 'evaluacion') {
         document.getElementById('evaluacion-form').style.display = 'block';
     } else if (formType === 'fine-tuning') {
         document.getElementById('fine-tuning-form').style.display = 'block';
@@ -55,6 +66,53 @@ function showForm(formType) {
     }
 }
 
+// Función principal para evaluar el modelo con el archivo CSV y columnas seleccionadas
+async function clasificarModelo() {
+    const modelName = document.getElementById('modelo-clasificacion').value; // Nombre del modelo seleccionado
+    const csvFile = document.getElementById('archivo-clasificacion').files[0]; // Archivo CSV
+
+    if (!csvFile) {
+        alert('Por favor selecciona un archivo CSV');
+        return;
+    }
+
+    const inputColumn = document.getElementById('column-texto-clasificacion').value; // Columna de entrada seleccionada
+    //const classColumn = document.getElementById('columnClassDropdown').value; // Columna de clasificación seleccionada
+
+    document.getElementById('loading-evaluacion').style.display = 'block'; // Muestra el spinner de carga
+
+    try {
+        // Prepara los datos para enviar al backend
+        const formData = new FormData();
+        formData.append('csv_file', csvFile);
+
+        // Realiza la petición al backend para evaluar el modelo
+        const response = await fetch('/api/v1/modelos/' + modelName + '/codifica/?col_texto=' + inputColumn, {
+            method: 'POST',
+            credentials: 'include',
+            body: formData
+        });
+
+        // Verifica si la respuesta fue exitosa, si no lanza error con detalles
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Error detallado:', errorText);
+            throw new Error(`Error ${response.status}: ${response.statusText}`);
+        }
+
+        // Parsea la respuesta como JSON y muestra los resultados
+        const data = await response.json();
+        mostrarResultadosClasificacion(data);
+
+    } catch (error) {
+        // Muestra cualquier error durante la solicitud
+        console.error('Error completo:', error);
+        alert(`Error al evaluar: ${error.message}`);
+    } finally {
+        // Oculta el spinner al final del proceso
+        document.getElementById('loading-evaluacion').style.display = 'none';
+    }
+}
 // Función principal para evaluar el modelo con el archivo CSV y columnas seleccionadas
 async function evaluarModelo() {
     const modelName = document.getElementById('modelo-evaluacion').value; // Nombre del modelo seleccionado
@@ -106,6 +164,39 @@ async function evaluarModelo() {
         // Oculta el spinner al final del proceso
         document.getElementById('loading-evaluacion').style.display = 'none';
     }
+}
+
+// Muestra los resultados devueltos por el backend después de la clasificación del modelo
+function mostrarResultadosClasificacion(data) {
+    const resultadosDiv = document.getElementById('resultados-evaluacion');
+    resultadosDiv.style.display = 'block';
+
+    // Extrae el dataset en formato split
+    const dataset = data.dataset;
+    const columns = dataset.columns;
+    const records = dataset.data;
+
+    // Construye la tabla HTML
+    let tableHTML = `<h3>Resultados de Clasificación: ${data.model}</h3>`;
+    tableHTML += `<div class="performance">
+        <p><strong>Tiempo total de cómputo:</strong> ${data.performance.computation_time_seconds.toFixed(2)} segundos</p>
+        <p><strong>Tiempo promedio por muestra:</strong> ${data.performance.computation_time_per_sample_seconds.toFixed(4)} segundos</p>
+    </div>`;
+    tableHTML += `<div class="table-responsive"><table class="table table-bordered"><thead><tr>`;
+    columns.forEach(col => {
+        tableHTML += `<th>${col}</th>`;
+    });
+    tableHTML += `</tr></thead><tbody>`;
+    records.forEach(row => {
+        tableHTML += `<tr>`;
+        row.forEach(cell => {
+            tableHTML += `<td>${cell}</td>`;
+        });
+        tableHTML += `</tr>`;
+    });
+    tableHTML += `</tbody></table></div>`;
+
+    resultadosDiv.innerHTML = tableHTML;
 }
 
 // Muestra los resultados devueltos por el backend después de la evaluación del modelo
@@ -241,6 +332,7 @@ async function cargarModelosDisponibles(idElemento) {
 
 // Llamar automáticamente al cargar la página
 document.addEventListener('DOMContentLoaded', () => {
+    cargarModelosDisponibles('modelo-clasificacion');
     cargarModelosDisponibles('modelo-evaluacion');
     cargarModelosDisponibles('modelo-base');
     cargarModelosDisponibles('modelo-entrenamiento');
