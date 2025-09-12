@@ -104,14 +104,7 @@ async def evaluate_model(
     col_clasificacion: str = Form(None)    #Columna Clasificacion
 ) -> Dict[str, Any]:
     try:
-         # Verifica que el archivo sea un CSV válido
-        if not csv_file.filename.lower().endswith('.csv'):
-            raise HTTPException(status_code=400, detail="Solo se aceptan archivos CSV")
-
-        # Lee el contenido del archivo
-        contents = await csv_file.read()
-        data = io.StringIO(contents.decode('utf-8'))
-        df = pd.read_csv(data)
+        df = await obtener_dataframe_desde_csv(csv_file)
 
         # Asigna columnas por defecto si no se especifican
         if col_texto is None:
@@ -126,33 +119,10 @@ async def evaluate_model(
                 detail=f"Columnas '{col_texto}' o '{col_clasificacion}' no encontradas en el CSV"
             )
         
-        # Función interna para obtener y_true y y_pred
-        def obtener_valores_y(df: pd.DataFrame, col_clasificacion: str, col_texto: str):
-            y_true = df[col_clasificacion].astype(str).tolist() #Valores reales
-
-            try:
-                # Se envían los textos al servicio del INEGI para codificación automática
-                textos = df[col_texto].astype(str).tolist()
-                payload = {"data": textos}
-                url_inegi = "http://lcidbind.inegi.gob.mx:5194/api/codificacion/enigh/t1/scian"
-                respuesta = requests.post(url_inegi, json=payload)
-                respuesta.raise_for_status()
-                resultado_inegi = respuesta.json()
-                
-                # Obtiene la primera etiqueta por texto
-                codificaciones = []
-                for etiquetas in resultado_inegi.get("tags", []):
-                    if etiquetas:
-                        codificaciones.append(etiquetas[0])  # Solo el código
-            except requests.exceptions.RequestException as e:
-                codificaciones = []
-                resultado_inegi = {"errors": [f"Error al conectar con INEGI: {str(e)}"]}
-
-            y_pred = codificaciones # Valores predicho
-            return y_true, y_pred
+        y_true = df[col_clasificacion].astype(str).tolist() #Valores reales
         
         # Llama a la función para obtener las etiquetas reales y predichas
-        y_true, y_pred = obtener_valores_y(df, col_clasificacion, col_texto)
+        y_pred = await codifica_(model_name, df, col_texto)
         
         # Calcula métricas de evaluación
         accuracy = accuracy_score(y_true, y_pred)
@@ -186,7 +156,39 @@ async def evaluate_model(
     except HTTPException as e:
         raise e
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error al procesar el archivo: {str(e)}")
+async def obtener_dataframe_desde_csv(csv_file: UploadFile) -> pd.DataFrame:
+    # Verifica que el archivo sea un CSV válido
+    if not csv_file.filename.lower().endswith('.csv'):
+        raise HTTPException(status_code=400, detail="Solo se aceptan archivos CSV")
+
+    contents = await csv_file.read()
+    data = io.StringIO(contents.decode('utf-8'))
+    df = pd.read_csv(data)
+    return df
+
+def obtener_enigh_t1(
+    model: str,          # Nombre del modelo a usar
+    df: pd.DataFrame ,      # Archivo CSV con datos de prueba
+    col_texto: str,           #Columna texto
+):
+    try:
+        # Se envían los textos al servicio del INEGI para codificación automática
+        textos = df[col_texto].astype(str).tolist()
+        payload = {"data": textos}
+        url_inegi = f"http://lcidbind.inegi.gob.mx:5194/api/codificacion/enigh/t1/{model}"
+        respuesta = requests.post(url_inegi, json=payload)
+        respuesta.raise_for_status()
+        resultado_inegi = respuesta.json()
+        
+        # Obtiene la primera etiqueta por texto
+        y_pred = []
+        for etiquetas in resultado_inegi.get("tags", []):
+            if etiquetas:
+                y_pred.append(etiquetas[0])  # Solo el código
+    except requests.exceptions.RequestException as e:
+        y_pred = []
+        resultado_inegi = {"errors": [f"Error al conectar con INEGI: {str(e)}"]}
+    return y_pred
 
 # --------------------- REGISTRO DEL ROUTER EN LA APP PRINCIPAL ---------------------
 # Se registra el router en la aplicación principal para activar todos los endpoints definidos
