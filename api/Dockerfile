@@ -5,6 +5,8 @@ FROM python:3.12-slim
 COPY requirements.txt .
 
 # Instala dependencias
+RUN pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copia el código de la aplicación

@@ -500,6 +500,9 @@ async function iniciarFineTuning() {
     const archivo = document.getElementById('archivo-finetuning').files[0];
     const modeloBase = document.getElementById('modelo-base').value;
     const epocas = document.getElementById('epocas').value;
+    const columna_texto = document.getElementById('columnDropdownFineTuning').value;
+    const columna_clase = document.getElementById('columnClassDropdownFineTuning').value;
+    const tasa_aprendizaje = document.getElementById('tasa-aprendizaje-finetuning').value;
 
     if (!archivo) {
         alert('Por favor selecciona un archivo CSV');
@@ -508,14 +511,17 @@ async function iniciarFineTuning() {
 
     // Crear el FormData
     const formData = new FormData();
-    formData.append("file", archivo);
-    formData.append("modelo", modeloBase);
-    formData.append("epocas", epocas);
+    formData.append("csv_file", archivo);
+    formData.append("model_name", modeloBase);
+    formData.append("num_train_epochs", epocas);
+    formData.append("text_col", columna_texto);
+    formData.append("label_col", columna_clase);
+    formData.append("learning_rate", tasa_aprendizaje);
 
     try {
         // Mostrar el estado de carga antes de enviar
-        document.getElementById('loading-fine-tuning').style.display = 'block';
-        document.getElementById('avance-fine-tuning').style.display = 'block';
+        document.getElementById('loading-finetuning').style.display = 'block';
+        document.getElementById('avance-finetuning').style.display = 'block';
 
         // Enviar al backend
         const response = await fetch("/api/v1/fine-tuning/", {

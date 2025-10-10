@@ -9,6 +9,17 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 import requests
 import traceback
 import time
+from fastapi.responses import JSONResponse
+import uuid
+import tempfile
+from pathlib import Path
+import numpy as np
+from sklearn.preprocessing import LabelEncoder
+from sklearn.model_selection import train_test_split
+from simpletransformers.classification import ClassificationModel, ClassificationArgs
+import torch
+from transformers import AutoConfig
+from datetime import datetime
 
 # Se crea una instancia principal de la aplicación FastAPI
 app = FastAPI()
@@ -52,27 +63,6 @@ async def obtener_modelos_disponibles():
     modelos = [{"nombre": modelo["nombre"], "id": modelo["id"]} for modelo in modelos_disponibles]
     return modelos
 
-# -------------------------- ENDPOINT DE FINE TUNING  ------------------------------
-
-@router.post("/fine-tuning/")
-async def fine_tuning(
-    file: UploadFile = File(...),     # Archivo CSV subido     
-    columna_texto: str = Form(...),   # Nombre de la columna de texto
-    columna_clase: str = Form(...)    # Nombre de la columna de clasificacion
-) -> Dict[str, str]:
-    
-    # Muestra información del archivo recibido
-    print(f"Archivo recibido: {file.filename}")
-    print(f"Columna de texto: {columna_texto}")
-    print(f"Columna de clasificación: {columna_clase}")
-    
-    # Retorna una respuesta de confirmación con los datos
-    return {
-        "status": "ok",
-        "archivo": file.filename,
-        "columna_texto": columna_texto,
-        "columna_clase": columna_clase
-    }
 
 # -------------------------- ENDPOINT DE ENTRENAMIENTO DESDE CERO  -----------------
 
@@ -243,6 +233,139 @@ def obtener_enigh_t1(
         y_pred = []
         resultado_inegi = {"errors": [f"Error al conectar con INEGI: {str(e)}"]}
     return y_pred
+
+def freeze_base_and_unfreeze_classifier(skt_model):
+    """
+    Freeze all parameters then unfreeze classifier-like parameters.
+    This tries to match common HF attribute names.
+    """
+    # Freeze all
+    for _, p in skt_model.model.named_parameters():
+        p.requires_grad = False
+
+    # Try to unfreeze commonly-named classifier modules
+    unfreeze_patterns = ["classifier", "pooler", "out_proj", "score", "classifier_head", "head"]
+    for name, p in skt_model.model.named_parameters():
+        for pat in unfreeze_patterns:
+            if pat in name:
+                p.requires_grad = True
+
+    # If the underlying model has attribute .classifier, explicitly unfreeze
+    if hasattr(skt_model.model, "classifier"):
+        for p in skt_model.model.classifier.parameters():
+            p.requires_grad = True
+
+# -------------------------- ENDPOINT DE FINE TUNING  ------------------------------
+
+@router.post("/fine-tuning/")
+async def fine_tuning(
+    csv_file: UploadFile = File(...),
+    text_col: str = Form(...),
+    label_col: str = Form(...),
+    model_name: str = Form("T1 ENIGH SCIAN"),
+    learning_rate: float = Form(5e-5),
+    num_train_epochs: int = Form(5),
+    train_batch_size: int = Form(8),
+    test_size: float = Form(0.1),
+):
+    # Save uploaded file to temp
+    tmp_dir = Path("/models") / f"trainjob_{datetime.now().strftime("%y%m%d_%H%M")}"
+    tmp_dir.mkdir(parents=True, exist_ok=True)
+
+    # Load original classes for the chosen model
+    if model_name == "T1 ENIGH SCIAN":
+        model_type = "bert"
+        model_route = "/models/enigh-scian-model"
+        classes_path = "/models/enigh-scian-classes.npy"
+    elif model_name == "T1 ENIGH SINCO":
+        model_type = "bert"
+        model_route = "/models/enigh-sinco-model"
+        classes_path = "/models/enigh-sinco-classes.npy"
+
+        
+
+    try:
+        df = await obtener_dataframe_desde_csv(csv_file)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error leyendo CSV: {e}")
+
+    if text_col not in df.columns or label_col not in df.columns:
+        raise HTTPException(status_code=400, detail="Columnas proporcionadas no existen en el archivo.")
+
+    df = df[[text_col, label_col]].dropna().rename(columns={text_col: "text", label_col: "label"}).reset_index(drop=True)
+    if df.shape[0] < 2:
+        raise HTTPException(status_code=400, detail="Dataset muy pequeño para entrenar.")
+
+    # Encode labels
+    le = LabelEncoder()
+    df["labels"] = le.fit_transform(df["label"])
+    num_labels = len(le.classes_)
+    classes_path = tmp_dir / "classes.npy"
+    np.save(classes_path, le.classes_)
+
+    # Split train/eval
+    if df.shape[0] >= 10 and 0.0 < test_size < 0.5:
+        train_df, eval_df = train_test_split(df, test_size=test_size)
+    else:
+        # small dataset: use same for eval
+        train_df = df.copy()
+        eval_df = df.copy()
+
+    # Create model args
+    model_args = ClassificationArgs()
+    model_args.learning_rate = learning_rate
+    model_args.num_train_epochs = num_train_epochs
+    model_args.train_batch_size = train_batch_size
+    model_args.reprocess_input_data = False
+    model_args.evaluate_during_training = True
+    model_args.overwrite_output_dir = True
+    model_args.use_multiprocessing = False
+    model_args.use_multiprocessing_for_evaluation = False
+    model_args.warmup_ratio = 0.06
+
+    # unique output dir for this job
+    output_dir = tmp_dir / "outputs"
+    model_args.output_dir = str(output_dir)
+    model_args.best_model_dir = str(output_dir / "best_model")
+
+    # device
+    use_cuda = torch.cuda.is_available()
+    cuda_device = 0 if use_cuda else -1
+
+    # force new classifier head
+    config = AutoConfig.from_pretrained(model_route, num_labels=num_labels)
+
+    model = ClassificationModel(
+        model_type,
+        model_route,
+        num_labels=num_labels,   # this alone triggers a new head
+        args=model_args,
+        use_cuda=use_cuda,
+        cuda_device=cuda_device,
+        ignore_mismatched_sizes=True
+    )
+
+    # Freeze base and unfreeze classification head only
+    freeze_base_and_unfreeze_classifier(model)
+
+    # Train
+    try:
+        train_result = model.train_model(train_df, acc=accuracy_score, eval_df=eval_df)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error durante entrenamiento: {e}")
+
+    # Save encoder classes and return paths and simple summary
+    response = {
+        "status": "ok",
+        "output_dir": str(output_dir),
+        "best_model_dir": str(model_args.best_model_dir),
+        "classes_npy": str(classes_path),
+        "num_train_samples": int(train_df.shape[0]),
+        "num_eval_samples": int(eval_df.shape[0]),
+        "num_labels": int(num_labels),
+    }
+
+    return JSONResponse(response)
 
 # --------------------- REGISTRO DEL ROUTER EN LA APP PRINCIPAL ---------------------
 # Se registra el router en la aplicación principal para activar todos los endpoints definidos

@@ -23,6 +23,7 @@ services:
     restart: unless-stopped
     volumes:
       - ./api/app:/app
+      - ./api/models:/models
     networks:
       - red_web
 

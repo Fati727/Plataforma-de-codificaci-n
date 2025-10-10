@@ -1,0 +1,8 @@
+*.tar.gz
+*.npy
+*.bin
+*.json
+*.safetensors
+*.pt
+*.txt
+*.csv
