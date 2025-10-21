@@ -20,6 +20,7 @@ from simpletransformers.classification import ClassificationModel, Classificatio
 import torch
 from transformers import AutoConfig
 from datetime import datetime
+import os
 
 # Se crea una instancia principal de la aplicación FastAPI
 app = FastAPI()
@@ -55,14 +56,27 @@ class Modelo(BaseModel):
 @router.get("/modelos-disponibles/", response_model=List[Modelo])
 async def obtener_modelos_disponibles():
 # Lista de modelos de lenguaje disponibles
-    modelos_disponibles = [
+    modelos = [
         {"id": 1, "nombre": "T1 ENIGH SCIAN"},
         {"id": 2, "nombre": "T1 ENIGH SINCO"},
         #{"id": 3, "nombre": "DistilBERT"}
     ]
-    modelos = [{"nombre": modelo["nombre"], "id": modelo["id"]} for modelo in modelos_disponibles]
+    for modelo in get_modelos_disco():
+        modelos.append({"id": 100 + len(modelos) + 1, "nombre": modelo})
     return modelos
 
+def get_modelos_disco():
+    modelos = []
+    base_path = "/models"
+    for dir_name in os.listdir(base_path):
+        dir_path = os.path.join(base_path, dir_name)
+        if os.path.isdir(dir_path) and dir_name.startswith("trainjob_"):
+            status_file = os.path.join(dir_path, "status.txt")
+            if os.path.isfile(status_file):
+                with open(status_file, "r", encoding="utf-8") as f:
+                    if "listo" in f.read():
+                        modelos.append(dir_name)
+    return modelos
 
 # -------------------------- ENDPOINT DE ENTRENAMIENTO DESDE CERO  -----------------
 
@@ -204,10 +218,35 @@ async def codifica_(
         y_pred = obtener_enigh_t1(model="scian", df=df, col_texto=col_texto)
     elif model_name == "T1 ENIGH SINCO":
         y_pred = obtener_enigh_t1(model="sinco", df=df, col_texto=col_texto)
+    elif model_name.startswith("trainjob_"):
+        y_pred = codifica_local(model_name=model_name, df=df, col_texto=col_texto)
     else:
         raise HTTPException(status_code=400, detail=f"Modelo '{model_name}' no soportado")
 
 
+    return y_pred
+
+def codifica_local(model_name: str, df: pd.DataFrame, col_texto: str):
+    model_route = f"/models/{model_name}/outputs/best_model"
+    classes_path = f"/models/{model_name}/classes.npy"
+
+    # Carga las clases originales
+    classes = np.load(classes_path, allow_pickle=True)
+    le = LabelEncoder()
+    le.classes_ = classes
+
+    # Crea el modelo de clasificación
+    model = ClassificationModel(
+        "bert",
+        model_route,
+        use_cuda=torch.cuda.is_available(),
+        cuda_device=0 if torch.cuda.is_available() else -1,
+        ignore_mismatched_sizes=True
+    )
+
+    textos = df[col_texto].astype(str).tolist()
+    y_pred_raw, _ = model.predict(textos)
+    y_pred = le.inverse_transform(y_pred_raw)
     return y_pred
 
 def obtener_enigh_t1(
@@ -271,6 +310,7 @@ async def fine_tuning(
     # Save uploaded file to temp
     tmp_dir = Path("/models") / f"trainjob_{datetime.now().strftime("%y%m%d_%H%M")}"
     tmp_dir.mkdir(parents=True, exist_ok=True)
+    write_status("iniciado", tmp_dir)
 
     # Load original classes for the chosen model
     if model_name == "T1 ENIGH SCIAN":
@@ -350,10 +390,12 @@ async def fine_tuning(
 
     # Train
     try:
+        write_status("entrenando", tmp_dir)
         train_result = model.train_model(train_df, acc=accuracy_score, eval_df=eval_df)
     except Exception as e:
+        write_status("error", tmp_dir)
         raise HTTPException(status_code=500, detail=f"Error durante entrenamiento: {e}")
-
+    write_status("listo", tmp_dir)
     # Save encoder classes and return paths and simple summary
     response = {
         "status": "ok",
@@ -367,6 +409,10 @@ async def fine_tuning(
 
     return JSONResponse(response)
 
+def write_status(message: str, tmp_dir: Path):
+    status_file = tmp_dir / "status.txt"
+    with open(status_file, "w") as f:
+        f.write(f"{message}")
 # --------------------- REGISTRO DEL ROUTER EN LA APP PRINCIPAL ---------------------
 # Se registra el router en la aplicación principal para activar todos los endpoints definidos
 app.include_router(router)
