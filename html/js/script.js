@@ -135,8 +135,8 @@ async function evaluarModelo() {
         const formData = new FormData();
         formData.append('model_name', modelName);
         formData.append('csv_file', csvFile);
-        formData.append('input_column', inputColumn);
-        formData.append('class_column', classColumn);
+        formData.append('col_texto', inputColumn);
+        formData.append('col_clasificacion', classColumn);
 
         // Realiza la petición al backend para evaluar el modelo
         const response = await fetch('/api/v1/evaluate-model/?model_name=' + modelName, {
