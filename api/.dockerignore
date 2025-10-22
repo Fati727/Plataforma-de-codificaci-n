@@ -1,0 +1,43 @@
+# Archivos y carpetas del sistema
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.log
+*.tmp
+*.swp
+*.bak
+
+# Entornos virtuales
+venv/
+.env/
+.env.local
+
+# Datos y modelos entrenados (montados vía docker-compose)
+app/runs/
+models/
+
+# Archivos temporales
+*.ipynb_checkpoints
+*.tar.gz
+*.zip
+*.csv
+*.xlsx
+
+# Configuración de IDEs y sistema operativo
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Cachés de dependencias
+pip-wheel-metadata/
+__pycache__/
+*.egg-info/
+dist/
+build/
+
+# Archivos de prueba o experimentos locales
+tests/
+notebooks/
+tmp/

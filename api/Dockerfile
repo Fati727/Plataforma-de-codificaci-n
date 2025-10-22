@@ -1,24 +1,26 @@
 # Usa una imagen oficial de Python 3.12 slim
 FROM python:3.12-slim
 
-# Copia los archivos de requerimientos
+ENV DEBIAN_FRONTEND=noninteractive
+
+WORKDIR /api
+
+# Copia los archivos de requerimientos primero (para aprovechar la cache)
 COPY requirements.txt .
 
-# Instala dependencias
-RUN pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+# system build deps (small)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc g++ git curl && rm -rf /var/lib/apt/lists/*
 
+# Install PyTorch CPU then other requirements
+RUN pip install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cpu
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copia el código de la aplicación
-#COPY . /app
+# Copia el resto del código fuente de la aplicación
+COPY . .
 
-# Establece el directorio de trabajo
-WORKDIR /app
-
-# Expone el puerto en el que correrá la app
+# Expone el puerto 8000 (FastAPI/uvicorn)
 EXPOSE 8000
 
-# Comando por defecto para ejecutar la app
+# Use main:app because main.py lives at the container root (/api/main.py)
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
-
-
